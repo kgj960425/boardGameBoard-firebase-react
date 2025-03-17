@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
+//React앱의 경우 아래와 같이 getFirestore 메서드를 활용해 Cloud Firestore를 연동 가능하다.
+
 
 const firebaseConfig = {
     apiKey: import.meta.env.VITE_APP_APIKEY,
