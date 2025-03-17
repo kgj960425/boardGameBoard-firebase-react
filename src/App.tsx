@@ -5,6 +5,8 @@ import LandingPage from './pages/LandingPage.tsx';
 import TraningPage from './pages/TraningPage.tsx';
 import Loading from './pages/Loading.tsx';
 import Navbar from './pages/Navbar.tsx';
+import Search from './pages/Search.tsx';
+import MyPage from './pages/MyPage.tsx';
 // import Layout from './views/layout/Layout.tsx';
 
 // @ts-ignore
@@ -17,6 +19,8 @@ function App() {
         <Routes>
             <Route path="/" element={<LandingPage/>} />
             <Route path="/TraningPage" element={<TraningPage/>} />
+            <Route path="/Search" element={<Search/>} />
+            <Route path="/MyPage" element={<MyPage/>} />
         </Routes>
     </Suspense>
   );
