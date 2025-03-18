@@ -31,6 +31,7 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           channelId: live
         env:
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_CLI_EXPERIMENTS: webframeworks
           VITE_APP_APIKEY: ${{ secrets.VITE_APP_APIKEY }}  # GitHub Secrets에서 환경 변수 사용
           VITE_APP_AUTHDOMAIN: ${{ secrets.VITE_APP_AUTHDOMAIN }}
