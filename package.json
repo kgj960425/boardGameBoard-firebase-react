@@ -11,9 +11,12 @@
   },
   "dependencies": {
     "firebase": "^11.4.0",
+    "immer": "^10.1.1",
     "react": "^19.0.0",
+    "react-cookie": "^8.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.3.0"
+    "react-router-dom": "^7.3.0",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

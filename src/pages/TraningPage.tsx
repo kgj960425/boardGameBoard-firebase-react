@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { db } from './firebase.tsx'
-import { doc, getDocs, getDoc, collection } from 'firebase/firestore'
+import { getDocs, collection } from 'firebase/firestore'
 
 // Firebase 사용자는 데이터베이스 역할로 Cloud Firestore를 활용할 수 있다.
 // 이 데이터베이스는 'collection > document > field' 3중 구조로 구성된다.
@@ -39,19 +39,19 @@ function TraningPage() {
   }, [])
 
   // 단일 문서 가져오기 (비동기 함수)
-  const getTest = async () => {
-    try {
-      const docRef = doc(db, 'product', 'product1')
-      const docSnap = await getDoc(docRef)
+  // const getTest = async () => {
+  //   try {
+  //     const docRef = doc(db, 'product', 'product1')
+  //     const docSnap = await getDoc(docRef)
 
-      if (docSnap.exists()) {
-        console.log('Document data:', docSnap.data())
-        setTest(docSnap.data())
-      }
-    } catch (error) {
-      console.error('Error fetching document:', error)
-    }
-  }
+  //     if (docSnap.exists()) {
+  //       console.log('Document data:', docSnap.data())
+  //       setTest(docSnap.data())
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching document:', error)
+  //   }
+  // }
 
   // 컬렉션 가져오기 (비동기 함수)
   const fetchCollection = async () => {

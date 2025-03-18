@@ -1,6 +1,6 @@
 import './Store.css';
 import { db } from '../pages/firebase';
-import { doc, getDocs, getDoc, collection } from 'firebase/firestore';
+import { getDocs, collection } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
 interface Product {
@@ -13,18 +13,18 @@ function Store() {
     const [products, setProducts] = useState<Product[]>([]);
 
     // 단일 문서 가져오기 (비동기 함수)
-    const getSingleDocument = async () => {
-        try {
-            const docRef = doc(db, 'product', 'product1');
-            const docSnap = await getDoc(docRef);
+    // const getSingleDocument = async () => {
+    //     try {
+    //         const docRef = doc(db, 'product', 'product1');
+    //         const docSnap = await getDoc(docRef);
 
-            if (docSnap.exists()) {
-                console.log('Document data:', docSnap.data());
-            }
-        } catch (error) {
-            console.error('Error fetching document:', error);
-        }
-    };
+    //         if (docSnap.exists()) {
+    //             console.log('Document data:', docSnap.data());
+    //         }
+    //     } catch (error) {
+    //         console.error('Error fetching document:', error);
+    //     }
+    // };
 
     // 컬렉션 가져오기 (비동기 함수)
     const getCollection = async () => {
