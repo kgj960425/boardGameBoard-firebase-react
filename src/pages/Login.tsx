@@ -18,12 +18,12 @@ const Login = () => {
       const user = userCredential.user;
       setIsLoginValid(true);
       setCookie('accessToken', await user.getIdToken());
-      setCookie('isLogin', 'true');
+      //setCookie('isLogin', 'true');
       navigate('/');
     } catch (error) {
       alert('아이디 혹은 비밀번호가 일치하지 않습니다.');
       setIsLoginValid(false);
-      setCookie('isLogin', 'false');
+      //setCookie('isLogin', 'false');
     }
   };
 
