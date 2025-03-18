@@ -23,7 +23,8 @@ jobs:
 
       - name: Build project
         run: npm run build  # Vite 사용하면 `npm run build`
-
+      - name: Debug Secrets
+        run: "echo Firebase Service Account: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'"
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -31,7 +32,6 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           channelId: live
         env:
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           FIREBASE_CLI_EXPERIMENTS: webframeworks
           VITE_APP_APIKEY: ${{ secrets.VITE_APP_APIKEY }}  # GitHub Secrets에서 환경 변수 사용
           VITE_APP_AUTHDOMAIN: ${{ secrets.VITE_APP_AUTHDOMAIN }}
