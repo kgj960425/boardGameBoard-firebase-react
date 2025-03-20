@@ -10,6 +10,14 @@
 2) 허가되지 않은 스크립트 입니다의 경우 - Powershell 검색 - 우클릭 - 관리자 권한으로 실행한 뒤 Set-ExecutionPolicy Unrestricted 입력해서 실행정책 변경
 
 ## firebase 셋팅
+무료 spark 요금제로 사용하는 기능.
+
+Hosting - 버전, 도메인, 베타 채널 관리.
+athentication - 인증
+Cloud Firestore - DB
+Analytics - 앱 사용 이력 적재 및 분석
+Cloud Messaging (FCM) 인증과 연계 하여 계정 찾기 및 알림.
+
 # 조코딩과 https://kmuhan-study.tistory.com/2 을 참고하였다
 
 1) npm install firebase
