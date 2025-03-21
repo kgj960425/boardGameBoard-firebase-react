@@ -11,6 +11,8 @@ import Store from './pages/Store.tsx';
 import Upload from './pages/Upload.tsx';
 import Login from './pages/Login.tsx';
 import ProtectRouter from './routers/ProtectRouter.tsx';
+import RoomTable from './pages/RoomTable.tsx';
+
 // import Layout from './views/layout/Layout.tsx';
 
 // @ts-ignore
@@ -23,25 +25,37 @@ const Main = React.lazy(() => import("./pages/Login.tsx"))
 function App() {
   return (
     <>
+    <div
+      style={{
+        width: '100%',
+        minHeight: '100vh',
+        backgroundImage: `url('/asset/images/cazino_table.jpg')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
       <Routes>
-        <Route>
-          <Route path="/Login" element={<Login/>} />
-        </Route>
-      </Routes>
-      <ProtectRouter>
-        <Suspense fallback={<Loading />}>
-            {/* Navbar는 항상 보여야 하므로 이 위치에 배치 */}
-            <Navbar />
-            <Routes>
-                <Route path="/" element={<LandingPage/>} />
-                <Route path="/Store" element={<Store/>} />
-                <Route path="/Upload" element={<Upload/>} />
-                <Route path="/TraningPage" element={<TraningPage/>} />
-                <Route path="/Search" element={<Search/>} />
-                <Route path="/MyPage" element={<MyPage/>} />
-            </Routes>
-        </Suspense>
-      </ProtectRouter>    
+          <Route>
+            <Route path="/Login" element={<Login/>} />
+          </Route>
+        </Routes>
+        <ProtectRouter>
+          <Suspense fallback={<Loading />}>
+              {/* Navbar는 항상 보여야 하므로 이 위치에 배치 */}
+              <Navbar />
+              <Routes>
+                  <Route path="/" element={<LandingPage/>} />
+                  <Route path="/Store" element={<Store/>} />
+                  <Route path="/Upload" element={<Upload/>} />
+                  <Route path="/TraningPage" element={<TraningPage/>} />
+                  <Route path="/RoomTable" element={<RoomTable/>} />
+                  <Route path="/MyPage" element={<MyPage/>} />
+              </Routes>
+          </Suspense>
+        </ProtectRouter>   
+    </div>
+       
     </>
   );
 }

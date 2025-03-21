@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { setCookie } from '../utils/CookieUtils.tsx';
 import { useNavigate } from 'react-router-dom';
-import { useLoginAction} from '../stores/LoginStore';
+import { useLoginAction } from '../stores/LoginStore';
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 const auth = getAuth();
@@ -12,18 +12,23 @@ const Login = () => {
   const { setIsLoginValid } = useLoginAction();
   const navigate = useNavigate();
 
+  useEffect(() => { 
+    navigate('/');
+    setIsLoginValid(true);
+  }, []);
+
   const handleClickLogin = async () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, ID, password);
       const user = userCredential.user;
       setIsLoginValid(true);
       setCookie('accessToken', await user.getIdToken());
-      //setCookie('isLogin', 'true');
+      setCookie('isLogin', 'true');
       navigate('/');
     } catch (error) {
       alert('아이디 혹은 비밀번호가 일치하지 않습니다.');
       setIsLoginValid(false);
-      //setCookie('isLogin', 'false');
+      setCookie('isLogin', 'false');
     }
   };
 
@@ -47,6 +52,7 @@ const Login = () => {
             type="text"
             required
             placeholder="ID를 입력하세요"
+            // value="player001@gmail.com"
             onChange={(e) => setID(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
