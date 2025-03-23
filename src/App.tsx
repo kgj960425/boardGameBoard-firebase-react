@@ -25,20 +25,8 @@ const Main = React.lazy(() => import("./pages/Login.tsx"))
 function App() {
   return (
     <>
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        backgroundImage: `url('/asset/images/cazino_table.jpg')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-      }}
-    >
-      <Routes>
-          <Route>
-            <Route path="/Login" element={<Login/>} />
-          </Route>
+        <Routes>
+          <Route path="/Login" element={<Login/>} />
         </Routes>
         <ProtectRouter>
           <Suspense fallback={<Loading />}>
@@ -53,9 +41,7 @@ function App() {
                   <Route path="/MyPage" element={<MyPage/>} />
               </Routes>
           </Suspense>
-        </ProtectRouter>   
-    </div>
-       
+        </ProtectRouter>
     </>
   );
 }
