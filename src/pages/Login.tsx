@@ -34,7 +34,7 @@ const Login = () => {
     const handleClickLogin = async () => {
 
         if (!id || !password) {
-            alert("아이디: " + id + " 와 비밀번호: " + password + "를 입력해주세요.");
+            alert("아이디 와 비밀번호 를 입력해주세요.");
             return;
         }
 

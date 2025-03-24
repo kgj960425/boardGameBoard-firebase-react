@@ -5,7 +5,6 @@ import { getAuth, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { app, db } from '../pages/firebase';
 import { useLoginAction } from "../stores/LoginStore";
-import { removeCookie } from "../utils/CookieUtils";
 
 const Navbar = () => {
   const [userName, setUserName] = useState("");
@@ -20,7 +19,6 @@ const Navbar = () => {
       if(auth){
         await signOut(auth);
         setIsLoginValid(false);
-        removeCookie('autoLogin');
       }
       
       navigate('/Login');
