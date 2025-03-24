@@ -20,8 +20,8 @@ const RoomTable = () => {
       </div>
 
       <div style={{ height: '10px' }}></div>
-      <div>
-        <table id="room-table">
+      <div id='roomTbody'>
+        <table id="room-table" style={{ border : '1px solid black' , borderCollapse: 'collapse'}}>
           <thead>
             <tr>
               <th scope="col" style={{ width: '210px' }}>방제목</th>

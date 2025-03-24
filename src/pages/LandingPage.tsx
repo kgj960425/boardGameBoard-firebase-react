@@ -1,7 +1,6 @@
 import { db } from '../pages/firebase';
-import { doc, getDoc, setDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
-import { SetStateAction, useEffect, useState } from 'react';
-import { getAuth } from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 
 interface Room {
     roomName: string;

@@ -10,6 +10,10 @@ const Navbar = () => {
   const [userName, setUserName] = useState("");
   const { setIsLoginValid } = useLoginAction();
   const navigate = useNavigate();
+  const adminUid = 'yOe9xt4h45dmJ7ELn4MGwmq05fh1';
+  // 현재 접속 사용자 정보
+  const auth = getAuth();
+  const user = auth.currentUser;
 
   const onSignOut = async () => {
     try {
@@ -28,10 +32,6 @@ const Navbar = () => {
   };
 
   useEffect(() => {    
-    // 현재 접속 사용자 정보
-    const auth = getAuth();
-    const user = auth.currentUser;
-
     if (user) {
         console.log(user.uid);  // 사용자 UID
     } else {
@@ -40,13 +40,12 @@ const Navbar = () => {
 
     // 사용자가 로그인한 후 이름을 네비게이션 바에 표시하는 함수 예시
     async function displayUserName() {
-        const auth = getAuth();
-        const user = auth.currentUser;
-        
+
         if (!user) {
             console.error('User is not logged in.');
             return;
         }
+
         const docRef = doc(db, "users", user.uid);
         const docSnap = await getDoc(docRef);
         const userData = docSnap.data();
@@ -89,11 +88,13 @@ const Navbar = () => {
           RoomTable
         </NavLink>
       </div>
-      <div>
-        <NavLink to="/mypage">
-          MyPage
-        </NavLink>
-      </div>
+      {user && adminUid === user.uid && (
+        <div>
+          <NavLink to="/AdminPage">
+            AdminPage
+          </NavLink>
+        </div>
+      )}
       <div style={{ color: 'white'}}>{userName} 님</div>
       <button onClick={onSignOut}>로그아웃</button>
     </nav>

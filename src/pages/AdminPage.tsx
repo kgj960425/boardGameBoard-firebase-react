@@ -1,11 +1,11 @@
-function MyPage() {
+function AdminPage() {
     return (
         <>  
             <div>
-                MyPage
+            AdminPage
             </div>
         </> 
     );
 }
 
-export default MyPage;
+export default AdminPage;
