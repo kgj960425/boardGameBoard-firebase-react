@@ -1,6 +1,14 @@
+import { useEffect } from "react";
+// import { db } from '../pages/firebase';
+// import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 //player001
 const RoomTable = () => {
+  useEffect(() => {
+    
+  }, []);
+
+
   return (
     <div style={{ padding: '50px', width: '1220px', margin: '0 auto', background: `url('/path/to/cazino_table.jpg')` }}>
       <div style={{ height: '20px', color: 'red'}}></div>
