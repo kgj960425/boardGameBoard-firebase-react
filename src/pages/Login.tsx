@@ -11,72 +11,54 @@ const Login = () => {
     const [password, setPassword] = useState<string>('');
     const [saveId, setSaveId] = useState<boolean>(false);
     const [savePassword, setSavePassword] = useState<boolean>(false);
-    const [autoLogin, setAutoLogin] = useState<boolean>(false);
     const { setIsLoginValid } = useLoginAction();
     const navigate = useNavigate();
 
-    // ⭐ 쿠키에서 데이터 가져오기 ⭐
+    // 쿠키에서 데이터 가져오기
     useEffect(() => {
         const storedId = getCookie("id");
         const storedPassword = getCookie("password");
-        const storedAutoLogin = getCookie("autoLogin") === true;
         const storedSaveId = !!storedId;
         const storedSavePassword = !!storedPassword;
-        console.log(storedId)
-        console.log(storedPassword)
-        console.log(storedAutoLogin)
-        console.log(storedSaveId)
-        console.log(storedSavePassword)
-
 
         setID(storedId || '');
         setPassword(storedPassword || '');
-        setAutoLogin(storedAutoLogin);
         setSaveId(storedSaveId);
         setSavePassword(storedSavePassword);
-
+        
+        //흠... handle click login이 실행 될때는 id, password란 이 비어 있고 input 박스도 전부 비어 있는 상태에서 이벤트가 발생해서 빈 값으로 로그인 시도를한다. 그래서 자동 로그인이 안되었던 듯.
+        //이건 javascript의 힙,스택,큐 로딩에 관한 지식이 좀 더 생겨야 가능할 듯하다.
     }, []);
 
-    // ⭐ 로그인 버튼 클릭 시 동작 ⭐
+    // 로그인 버튼 클릭 시 동작
     const handleClickLogin = async () => {
 
         if (!id || !password) {
-            alert("아이디: ",id," 와 비밀번호",password,"를 입력해주세요.");
+            alert("아이디: " + id + " 와 비밀번호: " + password + "를 입력해주세요.");
             return;
         }
 
         try {
-            console.log('auth:',auth,'|id:',id, '|PASSWORD:', password,'|')
             const userCredential = await signInWithEmailAndPassword(auth, id, password);
             const user = userCredential.user;
+
             setIsLoginValid(true);
-            setCookie('accessToken', await user.getIdToken(), 30);
-            setCookie('isLogin', 'true', 30);
+            setCookie('accessToken', await user.getIdToken(), { maxAge: 7 * 24 * 60 * 60 });
+            setCookie('isLogin', 'true', { maxAge: 7 * 24 * 60 * 60 });
             navigate('/');
 
-            // 쿠키 저장 처리
-            if (autoLogin) {
-                setCookie("autoLogin", "true", 30);
-                setCookie("id", ID, 30);
-                setCookie("password", password, 30);
+            if (saveId) {
+                setCookie("id", id, { maxAge: 7 * 24 * 60 * 60 });
             } else {
-                removeCookie("autoLogin");
-                if (saveId) {
-                    setCookie("id", ID, 30);
-                } else {
-                    removeCookie("id");
-                }
-                if (savePassword) {
-                    setCookie("password", password, 30);
-                } else {
-                    removeCookie("password");
-                }
+                removeCookie("id");
             }
-
+            if (savePassword) {
+                setCookie("password", password, { maxAge: 7 * 24 * 60 * 60 });
+            } else {
+                removeCookie("password");
+            }
         } catch (error) {
-            alert('아이디 혹은 비밀번호가 일치하지 않습니다.');
-            setIsLoginValid(false);
-            setCookie('isLogin', 'false', 30);
+            alert('아이디 혹은 비밀번호가 일치하지 않습니다. : ' + error);
         }
     };
 
@@ -129,14 +111,6 @@ const Login = () => {
                                 onChange={() => setSavePassword((prev) => !prev)}
                             />
                             비밀번호 저장
-                        </label>
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={autoLogin}
-                                onChange={() => setAutoLogin((prev) => !prev)}
-                            />
-                            자동 로그인
                         </label>
                     </div>
                     <button

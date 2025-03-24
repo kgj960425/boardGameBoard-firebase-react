@@ -1,12 +1,34 @@
 import { useEffect, useState } from "react";
 import "./Navbar.css";
-import { NavLink } from "react-router-dom";
-import { getAuth } from "firebase/auth";
+import { useNavigate, NavLink } from "react-router-dom";
+import { getAuth, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from '../pages/firebase';
+import { app, db } from '../pages/firebase';
+import { useLoginAction } from "../stores/LoginStore";
+import { removeCookie } from "../utils/CookieUtils";
 
 const Navbar = () => {
   const [userName, setUserName] = useState("");
+  const { setIsLoginValid } = useLoginAction();
+  const navigate = useNavigate();
+
+  const onSignOut = async () => {
+    try {
+      
+      const auth = getAuth(app);
+      console.log("auth" + auth);
+      if(auth){
+        await signOut(auth);
+        setIsLoginValid(false);
+        removeCookie('autoLogin');
+      }
+      
+      navigate('/Login');
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {    
     // 현재 접속 사용자 정보
     const auth = getAuth();
@@ -75,6 +97,7 @@ const Navbar = () => {
         </NavLink>
       </div>
       <div style={{ color: 'white'}}>{userName} 님</div>
+      <button onClick={onSignOut}>로그아웃</button>
     </nav>
   );
 };

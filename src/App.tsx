@@ -25,23 +25,23 @@ const Main = React.lazy(() => import("./pages/Login.tsx"))
 function App() {
   return (
     <>
-        <Routes>
-          <Route path="/Login" element={<Login/>} />
-        </Routes>
         <ProtectRouter>
           <Suspense fallback={<Loading />}>
               {/* Navbar는 항상 보여야 하므로 이 위치에 배치 */}
               <Navbar />
               <Routes>
-                  <Route path="/" element={<LandingPage/>} />
                   <Route path="/Store" element={<Store/>} />
                   <Route path="/Upload" element={<Upload/>} />
                   <Route path="/TraningPage" element={<TraningPage/>} />
                   <Route path="/RoomTable" element={<RoomTable/>} />
                   <Route path="/MyPage" element={<MyPage/>} />
+                  <Route path="/" element={<LandingPage/>} />
               </Routes>
           </Suspense>
         </ProtectRouter>
+        <Routes>
+          <Route path="/Login" element={<Login/>} />
+        </Routes>
     </>
   );
 }
