@@ -4,10 +4,11 @@
 
 1) node.js 설치 
 2) terminal에서 npm create vite@lastest (프로젝트명) - vite의 마지막 버전으로 (프로젝트명) 폴더 안에 react 프로젝트 폴더 생성 ex) npm create vite@lastest beardgameboard 
-3) npm install -g firebase-tools 
-4) npm install vite
-5) firebase login
-6) firebase init
+3) npm install zustand
+4) npm install -g firebase-tools 
+5) npm install vite
+6) firebase login
+7) firebase init
    PS C:\Users\user\IdeaProjects\boardGameBoard-firebase-react> firebase init
 
    ######## #### ########  ######## ########     ###     ######  ########

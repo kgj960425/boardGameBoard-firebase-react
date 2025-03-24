@@ -46,7 +46,7 @@ const Navbar = () => {
             return;
         }
 
-        const docRef = doc(db, "users", user.uid);
+        const docRef = doc(db, "A.users", user.uid);
         const docSnap = await getDoc(docRef);
         const userData = docSnap.data();
         setUserName(userData?.displayName);

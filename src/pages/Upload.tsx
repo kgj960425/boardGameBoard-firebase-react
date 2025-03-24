@@ -44,7 +44,7 @@ function Upload() {
         }
 
         try {
-            await setDoc(doc(db, 'users', user.uid), {
+            await setDoc(doc(db, 'A.users', user.uid), {
                 displayName: updateUserName,
                 updateDttm: new Date(),
                 uddateUser: user.uid,
@@ -71,7 +71,7 @@ function Upload() {
                 console.error('User is not logged in.');
                 return;
             }
-            const docSnap = await getDoc(doc(db, "users", user.uid));
+            const docSnap = await getDoc(doc(db, "A.users", user.uid));
             const userData = docSnap.data();
             setUserName(userData?.displayName);
             // 네비게이션 바의 특정 요소(예: id="user-name")에 이름을 표시합니다.
