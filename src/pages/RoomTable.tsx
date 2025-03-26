@@ -1,13 +1,55 @@
-import { useEffect } from "react";
-// import { db } from '../pages/firebase';
-// import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { db } from './firebase';
+import { getDocs } from "firebase/firestore";
+import { collection} from "firebase/firestore";
+
+interface Room {
+  title: string;
+  state: string;
+  players: [];
+  passwordYn: string;
+  password: string;
+  messages: string;
+  maxPlayers: number;
+  game: string;
+  id: string;
+}
 
 //player001
 const RoomTable = () => {
+  const [ rooms, setRooms ] = useState<Room[]>([]);
+
+  const searchRoomList = async () => {
+    try {
+      const roomSnapshot = getDocs(collection(db, 'A.rooms'));
+      const roomList = (await roomSnapshot).docs.map((doc) => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            title: data.title,
+            state: data.state,
+            players: data.players.length,
+            passwordYn: data.passwordYn,
+            password: data.password,
+            messages: data.messages,
+            maxPlayers: data.maxPlayers,
+            game: data.game,// Add a default or derived style
+        };
+    });
+      
+    setRooms(roomList);
+    
+    } catch (error) {
+      
+    }
+  } 
+
   useEffect(() => {
     
   }, []);
 
+  //데이터 항상 자동 최신화
+  searchRoomList();
 
   return (
     <div style={{ padding: '50px', width: '1220px', margin: '0 auto', background: `url('/path/to/cazino_table.jpg')` }}>
@@ -19,7 +61,7 @@ const RoomTable = () => {
           type="button"
           style={{
             height: '38px',
-            boxShadow: '0 0 30px 8px rgb(120 68 152 / 62%)',
+            boxShadow: '0 0 10px 2px rgb(120 68 152 / 62%)',
             fontWeight: 'bold',
           }}
         >
@@ -30,116 +72,40 @@ const RoomTable = () => {
       <div style={{ height: '10px' }}></div>
       <div id='roomTbody'>
         <table id="room-table" style={{ border : '1px solid black' , borderCollapse: 'collapse'}}>
-          <thead>
+          <thead style={{ border : '1px solid black' , borderCollapse: 'collapse'}}>
             <tr>
+              <th scope="col" style={{ width: '210px' }}>게임</th>
               <th scope="col" style={{ width: '210px' }}>방제목</th>
-              <th scope="col" style={{ width: '60px' }}>인원 수</th>
               <th scope="col" style={{ width: '65px' }}>게임상태</th>
               <th scope="col" style={{ width: '65px' }}>시간제한</th>
-              <th scope="col" style={{ width: '65px' }}>맵</th>
-              <th scope="col">확장</th>
-              <th scope="col">특수</th>
-              <th scope="col" style={{ width: '92px' }}>팬메이드</th>
+              <th scope="col" style={{ width: '60px' }}>인원 수</th>
               <th scope="col" style={{ width: '65px' }}></th>
             </tr>
           </thead>
           <tbody>
-            <tr data-room-seq="643627">
-              <td style={{ wordBreak: 'keep-all' }}>
-                <span style={{ color: '#ff9041', fontSize: '11px' }}>랭크&nbsp;</span>1:1 하실분~~~
-              </td>
-              <td>1/2</td>
-              <td>대기중</td>
-              <td>30초</td>
-              <td>엘리시움</td>
-              <td style={{ wordBreak: 'keep-all' }}>금성,서곡,서곡2</td>
-              <td style={{ wordBreak: 'keep-all' }}>프로모,업적확장,태양계단계(WGT),맵셔플,전체기업</td>
-              <td style={{ wordBreak: 'keep-all' }}>업적&기업상,서곡,기업,패스파인더</td>
-              <td>
-                <button
-                  className="btn-main"
-                  type="button"
-                  name="btn"
-                  data-kickuid="0"
-                  style={{ height: '24px' }}
-                >
-                  입장
-                </button>
-              </td>
-            </tr>
-            <tr id="hor-minimalist-c" data-room-seq="643626" style={{ height: '38px' }}>
-              <td style={{ wordBreak: 'keep-all' }}>
-                <span style={{ color: '#ff9041', fontSize: '11px' }}>랭크&nbsp;</span>홍보처
-              </td>
-              <td>2/2</td>
-              <td>게임중</td>
-              <td>30초</td>
-              <td>타르시스</td>
-              <td style={{ wordBreak: 'keep-all' }}>서곡,서곡2</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td></td>
-            </tr>
-            <tr id="hor-minimalist-c" data-room-seq="643625" style={{ height: '38px' }}>
-              <td style={{ wordBreak: 'keep-all' }}>
-                <span style={{ color: '#da64d6', fontSize: '11px' }}>나 홀로 화성에&nbsp;</span>맹그로브
-              </td>
-              <td>1/1</td>
-              <td>게임중</td>
-              <td>무제한</td>
-              <td>랜덤</td>
-              <td style={{ wordBreak: 'keep-all' }}>서곡</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td>
-                <button className="btn-main" type="button" name="btnWacthing" style={{ height: '24px' }}>
-                  관전
-                </button>
-              </td>
-            </tr>
-            <tr id="hor-minimalist-c" data-room-seq="643623" style={{ height: '38px' }}>
-              <td style={{ wordBreak: 'keep-all' }}>
-                <span style={{ color: '#da64d6', fontSize: '11px' }}>나 홀로 화성에&nbsp;</span>애틀란타 분지 연구실
-              </td>
-              <td>1/1</td>
-              <td>게임중</td>
-              <td>무제한</td>
-              <td>랜덤</td>
-              <td style={{ wordBreak: 'keep-all' }}>금성,서곡,서곡2</td>
-              <td style={{ wordBreak: 'keep-all' }}>프로모,태양계단계(WGT),맵셔플,전체기업</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td></td>
-            </tr>
-            <tr id="hor-minimalist-c" data-room-seq="643620" style={{ height: '38px' }}>
-              <td style={{ wordBreak: 'keep-all' }}>
-                <span style={{ color: '#da64d6', fontSize: '11px' }}>나 홀로 화성에&nbsp;</span>가축
-              </td>
-              <td>1/1</td>
-              <td>게임중</td>
-              <td>무제한</td>
-              <td>랜덤</td>
-              <td style={{ wordBreak: 'keep-all' }}>금성,서곡,서곡2</td>
-              <td style={{ wordBreak: 'keep-all' }}>프로모,태양계단계(WGT),전체기업</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td>
-                <button className="btn-main" type="button" name="btnWacthing" style={{ height: '24px' }}>
-                  관전
-                </button>
-              </td>
-            </tr>
-            <tr id="hor-minimalist-c" data-room-seq="643603" style={{ height: '38px' }}>
-              <td style={{ wordBreak: 'keep-all' }}>
-                <span style={{ color: '#da64d6', fontSize: '11px' }}>나 홀로 화성에&nbsp;</span>심부유정 발열
-              </td>
-              <td>1/1</td>
-              <td>게임중</td>
-              <td>무제한</td>
-              <td>랜덤</td>
-              <td style={{ wordBreak: 'keep-all' }}>서곡,서곡2</td>
-              <td style={{ wordBreak: 'keep-all' }}>프로모</td>
-              <td style={{ wordBreak: 'keep-all' }}>없음</td>
-              <td></td>
-            </tr>
+            {rooms.map((room) => (
+              <tr data-room-seq={room.id} style={{ border : '1px solid black'}}>
+                <td style={{ wordBreak: 'keep-all' }}>{room.game}</td>
+                <td style={{ wordBreak: 'keep-all' }}>
+                  <span style={{ color: 'black', fontSize: '11px' }}>{room.title}</span>
+                </td>
+                <td>{room.state}</td>
+                <td>0</td>
+                <td>{room.players}/{room.maxPlayers}</td>
+                <td>
+                  <button
+                    className="btn-main"
+                    type="button"
+                    name="btn"
+                    data-kickuid="0"
+                    style={{ height: '24px' }}
+                  >
+                    입장
+                  </button>
+                </td>
+              </tr>
+            ))
+            }
           </tbody>
         </table>
       </div>
