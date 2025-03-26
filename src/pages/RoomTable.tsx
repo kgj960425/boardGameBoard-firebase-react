@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { db } from './firebase';
-import { getDocs } from "firebase/firestore";
-import { collection} from "firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
+import { collection } from "firebase/firestore";
 
 interface Room {
   title: string;
@@ -21,8 +21,10 @@ const RoomTable = () => {
 
   const searchRoomList = async () => {
     try {
-      const roomSnapshot = getDocs(collection(db, 'A.rooms'));
-      const roomList = (await roomSnapshot).docs.map((doc) => {
+      //                                                 필드 레벨에서 'state' 컬럼을 찾고 값이 end인 document 제외
+      const roomQuery = query(collection(db, 'A.rooms'), where("state", "!=", "end"));
+      const roomSnapshot = await getDocs(roomQuery);
+      const roomList = roomSnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
             id: doc.id,
@@ -33,7 +35,7 @@ const RoomTable = () => {
             password: data.password,
             messages: data.messages,
             maxPlayers: data.maxPlayers,
-            game: data.game,// Add a default or derived style
+            game: data.game,
         };
     });
       
