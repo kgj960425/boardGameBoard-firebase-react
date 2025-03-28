@@ -1,112 +1,130 @@
-import { db } from '../pages/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import { useState, CSSProperties, useRef } from "react";
+import { motion } from "framer-motion";
 
-interface Room {
-    roomName: string;
-    gameStyle: string;
-    gameState: string;
-    id: string;
-}
+const CARD_WIDTH = 50;
+const CARD_HEIGHT = 75;
+const BOARD_WIDTH = 500;
+const BOARD_HEIGHT = 400;
+
+const styles: { [key: string]: CSSProperties } = {
+  scene: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100vh",
+    backgroundColor: "#2e2e2e",
+  },
+  board: {
+    position: "relative",
+    width: `${BOARD_WIDTH}px`,
+    height: `${BOARD_HEIGHT}px`,
+    backgroundColor: "#3e3e3e",
+    borderRadius: "16px",
+    perspective: "1000px",
+    transform: "rotateX(30deg)",
+    transformStyle: "preserve-3d",
+    overflow: "hidden",
+    marginBottom: "20px",
+  },
+  card: {
+    width: `${CARD_WIDTH}px`,
+    height: `${CARD_HEIGHT}px`,
+    backgroundColor: "#fff",
+    borderRadius: "8px",
+    border: "2px solid #000",
+    position: "absolute",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "1.5rem",
+    boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
+    transform: "rotateX(-30deg)",
+    touchAction: "none",
+  },
+  button: {
+    padding: "10px 20px",
+    fontSize: "16px",
+    borderRadius: "8px",
+    border: "none",
+    cursor: "pointer",
+    backgroundColor: "#4caf50",
+    color: "white",
+  },
+};
 
 function LandingPage() {
-    const [rooms, setRooms] = useState<Room[]>([]);
-    
-    const viewBoardGameRoom = async () => {
-        try {
-            const querySnapshot = await getDocs(collection(db, "room"));
-            const productList = querySnapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    roomName: data.roomName,
-                    gameStyle: data.gameStyle,
-                    gameState: data.gameState,
-                };
-            });
+  const boardRef = useRef<HTMLDivElement>(null);
 
-            setRooms(productList); // 가져온 데이터로 상태 업데이트
-        } catch (error) {
-            console.error("Error fetching products:", error);
+  const [cards, setCards] = useState([
+    { id: 1, x: 0, y: 0 },
+    { id: 2, x: 0, y: 150 },
+  ]);
+
+  const clampPosition = (x: number, y: number) => {
+    const clampedX = Math.max(0, Math.min(x, BOARD_WIDTH - CARD_WIDTH));
+    const clampedY = Math.max(0, Math.min(y, BOARD_HEIGHT - CARD_HEIGHT));
+    return { x: clampedX, y: clampedY };
+  };
+
+  const throwCard = () => {
+    const randomX = Math.floor(Math.random() * (BOARD_WIDTH - CARD_WIDTH));
+    const randomY = Math.floor(Math.random() * (BOARD_HEIGHT - CARD_HEIGHT));
+
+    const card1 = cards[0];
+    const collided = Math.abs(card1.x - randomX) < CARD_WIDTH &&
+                     Math.abs(card1.y - randomY) < CARD_HEIGHT;
+
+    const newCard2 = collided
+      ? {
+          ...cards[1],
+          x: Math.max(0, Math.min(card1.x - 20, BOARD_WIDTH - CARD_WIDTH)),
+          y: cards[1].y,
         }
-    };
+      : { ...cards[1], x: randomX, y: randomY };
 
+    setCards([card1, newCard2]);
+  };
 
-    // 보드게임 대기방 목록을 가져오는 함수
-    // const viewBoardGameRooms = () => {
-    //     // 데이터 실시간으로 가져오기 : onSnapshot : getDoc과 마찬가지로 Firestore에 저장된 document를 가져오는데 사용되는 메서드이다.
-    //     // Firestore에 저장된 document나 collection의 변경 사항을 실시간으로 감지하고 처리하는데 사용되는 메서드이다.
-    //     onSnapshot(doc(db, "boardGameRooms"), (doc) => {
-    //         console.log(" data: ", doc.data());
-    //         setRooms(doc.data());
+  const handleDrag = (i: number, event: any, info: any) => {
+    const boardElement = boardRef.current;
+    if (!boardElement || !event?.currentTarget?.getBoundingClientRect) return;
+  
+    const boardRect = boardElement.getBoundingClientRect();
+    const cardRect = event.currentTarget.getBoundingClientRect();
+  
+    const rawX = cardRect.left - boardRect.left;
+    const rawY = cardRect.top - boardRect.top;
+    const { x: newX, y: newY } = clampPosition(rawX, rawY);
+  
+    setCards((prev) => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], x: newX, y: newY };
+      return updated;
+    });
+  };
+  
 
-    //         const productList = querySnapshot.docs.map((doc) => {
-    //             const data = doc.data();
-    //             return {
-    //                 id: doc.id,
-    //                 name: data.name,
-    //                 pay: data.pay,
-    //             };
-    //         });
-
-    //         setProducts(productList); 
-    //     });
-
-    //     // 데이터 실시간으로 가져오기 : onSnapshot : getDoc과 마찬가지로 Firestore에 저장된 document를 가져오는데 사용되는 메서드이다.
-    //     // Firestore에 저장된 document나 collection의 변경 사항을 실시간으로 감지하고 처리하는데 사용되는 메서드이다.
-    //     const unsub = onSnapshot(doc(db, "room"), (doc) => {
-    //         console.log(" data: ", doc.data());
-    //     });
-
-    //     db.collection("boardGameRooms").get().then((querySnapshot) => {
-    //         querySnapshot.forEach((doc) => {
-    //             console.log(`${doc.id} => ${doc.data()}`);
-    //         });
-    
-    
-    
-    //     }
-    // }
-
-    
-
-    
-
-    useEffect(() => {
-        // 보드게임 대기방 목록을 가져오는 함수
-        //viewBoardGameRooms();
-        viewBoardGameRoom();
-
-
-
-    }, []);
-
-    return (
-        <>  
-            <div>
-                LandingPage
-            </div>
-            {/* 
-            1) 랜딩 페이지는 접속하면 무조건 보이도록 빈 페이지로 만들어 놓고
-            2) 로그인 페이지로 이동하는 버튼을 따로 만들어 놓는다.
-            3) Navbar는 항상 페이지 상단에 노출되도록 할 것. 
-            */}
-            <div className="container mt-3">
-                <h1>상품 목록</h1>
-                {rooms.map((rooms) => (
-                    <div key={rooms.id} className="product">
-                        <div className="thumbnail" style={{ backgroundImage: "url('https://placehold.co/600x400')" }}></div>
-                        <div className="flex-grow-1 p-4">
-                            <h5 className="title">방제 : {rooms.roomName}</h5>
-                            <p className="date">게임 : {rooms.gameStyle}</p>
-                            <p className="price">{rooms.gameState}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-        </> 
-    );
+  return (
+    <div style={styles.scene}>
+      <div style={styles.board} ref={boardRef}>
+        {cards.map((card, i) => (
+          <motion.div
+            key={card.id}
+            style={styles.card}
+            animate={{ x: card.x, y: card.y }}
+            drag
+            dragMomentum={false}
+            onDragEnd={(event, info) => handleDrag(i, event, info)}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            {card.id === 1 ? "🂡" : "🂱"}
+          </motion.div>
+        ))}
+      </div>
+      <button style={styles.button} onClick={throwCard}>Throw Card</button>
+    </div>
+  );
 }
 
 export default LandingPage;

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from './firebase';
 import { getDocs, query, where } from "firebase/firestore";
 import { collection } from "firebase/firestore";
+import CreateRoomModal from "../modals/CreateRoomModal";
 
 interface Room {
   title: string;
@@ -18,6 +19,7 @@ interface Room {
 //player001
 const RoomTable = () => {
   const [ rooms, setRooms ] = useState<Room[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const searchRoomList = async () => {
     try {
@@ -58,17 +60,19 @@ const RoomTable = () => {
       <div style={{ height: '20px', color: 'red'}}></div>
       <div>
         <button
-          className="btn-main"
-          id="clkMakeRoom"
-          type="button"
+          onClick={() => setModalOpen(true)}
           style={{
-            height: '38px',
-            boxShadow: '0 0 10px 2px rgb(120 68 152 / 62%)',
-            fontWeight: 'bold',
+            padding: '10px 20px',
+            backgroundColor: '#10b981',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '60px',
+            cursor: 'pointer',
           }}
-        >
+        > 
           방만들기
         </button>
+        <CreateRoomModal isOpen={modalOpen} onRequestClose={() => setModalOpen(false)}/>
       </div>
 
       <div style={{ height: '10px' }}></div>
