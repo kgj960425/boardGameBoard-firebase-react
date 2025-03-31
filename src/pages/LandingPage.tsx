@@ -1,130 +1,97 @@
-import { useState, CSSProperties, useRef } from "react";
-import { motion } from "framer-motion";
 
-const CARD_WIDTH = 50;
-const CARD_HEIGHT = 75;
-const BOARD_WIDTH = 500;
-const BOARD_HEIGHT = 400;
 
-const styles: { [key: string]: CSSProperties } = {
-  scene: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "100vh",
-    backgroundColor: "#2e2e2e",
-  },
-  board: {
-    position: "relative",
-    width: `${BOARD_WIDTH}px`,
-    height: `${BOARD_HEIGHT}px`,
-    backgroundColor: "#3e3e3e",
-    borderRadius: "16px",
-    perspective: "1000px",
-    transform: "rotateX(30deg)",
-    transformStyle: "preserve-3d",
-    overflow: "hidden",
-    marginBottom: "20px",
-  },
-  card: {
-    width: `${CARD_WIDTH}px`,
-    height: `${CARD_HEIGHT}px`,
-    backgroundColor: "#fff",
-    borderRadius: "8px",
-    border: "2px solid #000",
-    position: "absolute",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "1.5rem",
-    boxShadow: "2px 2px 10px rgba(0,0,0,0.3)",
-    transform: "rotateX(-30deg)",
-    touchAction: "none",
-  },
-  button: {
-    padding: "10px 20px",
-    fontSize: "16px",
-    borderRadius: "8px",
-    border: "none",
-    cursor: "pointer",
-    backgroundColor: "#4caf50",
-    color: "white",
-  },
-};
-
-function LandingPage() {
-  const boardRef = useRef<HTMLDivElement>(null);
-
-  const [cards, setCards] = useState([
-    { id: 1, x: 0, y: 0 },
-    { id: 2, x: 0, y: 150 },
-  ]);
-
-  const clampPosition = (x: number, y: number) => {
-    const clampedX = Math.max(0, Math.min(x, BOARD_WIDTH - CARD_WIDTH));
-    const clampedY = Math.max(0, Math.min(y, BOARD_HEIGHT - CARD_HEIGHT));
-    return { x: clampedX, y: clampedY };
+// 이미지 자동 import용 helper (Vite 환경 기준)
+const importAllImages = () => {
+    const context = import.meta.glob('../assets/images/*.{jpg,png}', { eager: true });
+  
+    const cardImages: { [key: string]: string } = {};
+    for (const path in context) {
+      const fileName = path.split('/').pop()?.replace(/\.(jpg|png)$/, '');
+      if (fileName) {
+        cardImages[fileName] = (context[path] as { default: string }).default;
+      }
+    }
+    return cardImages;
   };
-
-  const throwCard = () => {
-    const randomX = Math.floor(Math.random() * (BOARD_WIDTH - CARD_WIDTH));
-    const randomY = Math.floor(Math.random() * (BOARD_HEIGHT - CARD_HEIGHT));
-
-    const card1 = cards[0];
-    const collided = Math.abs(card1.x - randomX) < CARD_WIDTH &&
-                     Math.abs(card1.y - randomY) < CARD_HEIGHT;
-
-    const newCard2 = collided
-      ? {
-          ...cards[1],
-          x: Math.max(0, Math.min(card1.x - 20, BOARD_WIDTH - CARD_WIDTH)),
-          y: cards[1].y,
-        }
-      : { ...cards[1], x: randomX, y: randomY };
-
-    setCards([card1, newCard2]);
-  };
-
-  const handleDrag = (i: number, event: any, info: any) => {
-    const boardElement = boardRef.current;
-    if (!boardElement || !event?.currentTarget?.getBoundingClientRect) return;
   
-    const boardRect = boardElement.getBoundingClientRect();
-    const cardRect = event.currentTarget.getBoundingClientRect();
-  
-    const rawX = cardRect.left - boardRect.left;
-    const rawY = cardRect.top - boardRect.top;
-    const { x: newX, y: newY } = clampPosition(rawX, rawY);
-  
-    setCards((prev) => {
-      const updated = [...prev];
-      updated[i] = { ...updated[i], x: newX, y: newY };
-      return updated;
+  // 카드 생성용
+  const generateDeck = (images: { [key: string]: string }) => {
+    const deck = Object.entries(images).map(([name, url]) => {
+      const match = name.match(/(Red|Blue|Green|Yellow)(\d+)/);
+      if (!match) return null;
+      const [, color, number] = match;
+      return {
+        id: name,
+        color,
+        number: Number(number),
+        image: url
+      };
     });
+    return deck.filter(Boolean);
   };
   
-
-  return (
-    <div style={styles.scene}>
-      <div style={styles.board} ref={boardRef}>
-        {cards.map((card, i) => (
-          <motion.div
-            key={card.id}
-            style={styles.card}
-            animate={{ x: card.x, y: card.y }}
-            drag
-            dragMomentum={false}
-            onDragEnd={(event, info) => handleDrag(i, event, info)}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            {card.id === 1 ? "🂡" : "🂱"}
-          </motion.div>
-        ))}
+  // Main React Component
+  import { useState } from 'react';
+  
+  export default function LectioGame() {
+    const [players, setPlayers] = useState(0);
+    const [deck, setDeck] = useState<any[]>([]);
+    const [playerHands, setPlayerHands] = useState<any[][]>([]);
+    const [started, setStarted] = useState(false);
+  
+    const images = importAllImages();
+  
+    const startGame = (playerCount: number) => {
+      const fullDeck = generateDeck(images);
+      const shuffled = fullDeck.sort(() => Math.random() - 0.5);
+      const hands: any[][] = Array.from({ length: playerCount }, () => []);
+      let cardIndex = 0;
+      while (cardIndex < shuffled.length) {
+        for (let i = 0; i < playerCount && cardIndex < shuffled.length; i++) {
+          hands[i].push(shuffled[cardIndex++]);
+        }
+      }
+      setPlayerHands(hands);
+      setDeck(shuffled);
+      setPlayers(playerCount);
+      setStarted(true);
+    };
+  
+    if (!started) {
+      return (
+        <div className="p-4 text-center">
+          <h1 className="text-2xl mb-4">Lectio Multi Game</h1>
+          <p className="mb-2">참가 인원을 선택하세요 (2~5명):</p>
+          {[2, 3, 4, 5].map(n => (
+            <button key={n} onClick={() => startGame(n)} className="m-2 p-2 bg-blue-500 text-white rounded">
+              {n}명 시작
+            </button>
+          ))}
+        </div>
+      );
+    }
+  
+    return (
+      <div className="p-4">
+        <h2 className="text-xl mb-4">게임 시작! 총 {players}명</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {playerHands.map((hand, idx) => (
+            <div key={idx} className="border p-2 rounded shadow">
+              <h3 className="font-bold mb-2">플레이어 {idx + 1}</h3>
+              <div className="flex flex-wrap gap-1">
+                {hand.map((card, i) => (
+                  <img
+                    key={i}
+                    src={card.image}
+                    alt={`${card.color} ${card.number}`}
+                    className="w-12 h-18 object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <button style={styles.button} onClick={throwCard}>Throw Card</button>
-    </div>
-  );
-}
-
-export default LandingPage;
+    );
+  }
+  
