@@ -95,7 +95,7 @@ const RoomTable = () => {
                     </thead>
                     <tbody>
                         {rooms.map((room) => (
-                            <tr data-room-seq={room.id} style={{ border : '1px solid black'}}>
+                            <tr key={room.id} data-room-seq={room.id} style={{ border : '1px solid black'}}>
                                 <td style={{ wordBreak: 'keep-all' }}>{room.game}</td>
                                 <td style={{ wordBreak: 'keep-all' }}>
                                   <span style={{ color: 'black', fontSize: '11px' }}>{room.title}</span>

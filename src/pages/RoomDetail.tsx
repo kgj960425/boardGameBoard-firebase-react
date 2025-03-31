@@ -1,31 +1,54 @@
-// import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-// import { db } from "./firebase";
+import React, {useEffect, useState} from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase.tsx";
 
-// const RoomDetail = () => {
+interface Room {
+    title: string;
+    state: string;
+    players: [];
+    passwordYn: string;
+    password: string;
+    messages: string;
+    maxPlayers: number;
+    game: string;
+    id: string;
+}
 
-//     // 메시지 전송 함수 예시
-//     async function sendMessage(roomId: string, currentUser: { uid: any; }, messageText: string) {
-//         if (messageText.trim() === "") return;  // 빈 메시지는 무시
-//         try {
-//           await addDoc(collection(db, "rooms", roomId, "messages"), {
-//             text: messageText.trim(),
-//             sender: currentUser.uid,
-//             timestamp: serverTimestamp()
-//           });
-//         } catch (error) {
-//           console.error("메시지 전송 오류:", error);
-//         }
-//       }
+const RoomDetail = ( roomId ) => {
+    const [ room, setRoom ] = useState<Room>();
+    
+    const getRoomTitle = async (roomId: string) => {
+        const docRef = doc(db, 'A.rooms', roomId);
+        const docSnap = await getDoc(docRef);
 
-      
+        if (!docSnap.exists()) {
+            console.log("No such document!");
+        } else {
+            const data = docSnap.data();
+            return {
+                id: docSnap.id,
+                title: ,
+                state: data.state,
+                players: data.players,
+                passwordYn: data.passwordYn,
+                password: data.password,
+                messages: data.messages,
+                maxPlayers: data.maxPlayers,
+                game: data.game,
+            };
+            setRoom(data);
+        }
+    };
 
-//     return(
-//         {
-            
-//         }
+    useEffect(() => {
+        getRoomTitle( roomId );
+    }, []);
+    
+    return(
+        <>
+            <div>대기방 화면 , { room.title? } </div>
+        </>
+    )
+}
 
-//     )
-
-// }
-
-// export default RoomDetail;
+export default RoomDetail;
