@@ -1,94 +1,140 @@
-/* 모바일 전용 */
-@media (max-width: 600px) {
-  #root {
-    max-width: 600px;
-  }
-}
-
-/* 태블릿 전용 */
-@media (min-width: 601px) and (max-width: 1024px) {
-  #root {
-    max-width: 1024px;
-  }
-}
-
-/* 데스크탑 */
-@media (min-width: 1025px) {
-  #root {
-    max-width: 1280px;
-  }
-}
-
-
-
-/* styles.css */
-body {
-  background: #ECEFF1;
-  color: rgba(0, 0, 0, 0.87);
-  font-family: Roboto, Helvetica, Arial, sans-serif;
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-#message {
-  background: white;
-  max-width: 360px;
-  margin: 100px auto 16px;
-  padding: 32px 24px;
-  border-radius: 3px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-}
-
-#message h2 {
-  color: #ffa100;
-  font-weight: bold;
-  font-size: 16px;
-  margin: 0 0 8px;
-}
-
-#message h1 {
-  font-size: 22px;
-  font-weight: 300;
-  color: rgba(0, 0, 0, 0.6);
-  margin: 0 0 16px;
-}
-
-#message p {
-  line-height: 140%;
-  margin: 16px 0 24px;
+body {
+  background-color: #2b2b2b; /* 어두운 카지노 테이블 느낌 */
+  color: #f2f2f2;
+  font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
+  line-height: 1.5;
   font-size: 14px;
+  min-height: 100vh;
+  background-image: url('./assets/images/cazino_table.jpg');
+  background-size: cover;
+  background-position: center;
 }
 
-#message a {
-  display: block;
-  text-align: center;
-  background: #039be5;
-  text-transform: uppercase;
-  text-decoration: none;
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+/* === Main Layout === */
+main {
+  padding: 24px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 16px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
+  min-height: 600px;
+}
+
+/* === Common Buttons === */
+button {
+  background-color: #03c75a;
   color: white;
-  padding: 16px;
-  border-radius: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
 }
 
-#load {
-  color: rgba(0, 0, 0, 0.4);
+button:hover {
+  background-color: #02b24b;
+}
+
+/* === Table Styling === */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #f1f1f1;
+}
+
+th, td {
+  border: 1px solid #444;
+  padding: 10px;
   text-align: center;
-  font-size: 13px;
 }
 
-#button {
+th {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* === Utility === */
+.text-center {
   text-align: center;
-  margin-top: 24px;
+}
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.rounded {
+  border-radius: 12px;
+}
+.shadow {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-@media (max-width: 600px) {
-  body, #message {
-    margin-top: 0;
-    background: white;
-    box-shadow: none;
-  }
+/* === Responsive === */
+@media (max-width: 768px) {
   body {
-    border-top: 16px solid #ffa100;
+    font-size: 13px;
+  }
+
+  nav {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  main {
+    padding: 16px;
+  }
+
+  button {
+    width: 100%;
+  }
+
+  table {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1280px) {
+  body {
+    font-size: 14px;
+  }
+
+  nav {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  main {
+    padding: 24px 32px;
+  }
+}
+
+@media (min-width: 1281px) {
+  body {
+    font-size: 15px;
+  }
+
+  #root {
+    max-width: 1440px;
+  }
+
+  nav {
+    gap: 30px;
+  }
+
+  main {
+    padding: 32px;
   }
 }
