@@ -10,7 +10,7 @@ import {
   orderBy,
   limit
 } from "firebase/firestore";
-import { db } from "../pages/firebase";
+import { db } from "../firebase/firebase.tsx";
 import "./ChattingRoom.css";
 
 interface ChatMessage {

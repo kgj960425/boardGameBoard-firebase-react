@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { setCookie, getCookie, removeCookie } from '../utils/CookieUtils.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useLoginAction } from '../stores/LoginStore';
-import { getAuth, signInWithEmailAndPassword, setPersistence, browserSessionPersistence } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 const auth = getAuth();
 
@@ -32,33 +32,30 @@ const Login = () => {
 
     // 로그인 버튼 클릭 시 동작
     const handleClickLogin = async () => {
-
         if (!id || !password) {
             alert("아이디 와 비밀번호 를 입력해주세요.");
             return;
         }
 
         try {
-            signInWithEmailAndPassword(auth, id, password).then(async (result) => {
-                setPersistence(auth, browserSessionPersistence);
-                const user = result.user;
+            const result = await signInWithEmailAndPassword(auth, id, password);
+            const user = result.user;
 
-                setIsLoginValid(true);
-                setCookie('accessToken', await user.getIdToken(), { maxAge: 7 * 24 * 60 * 60 });
-                setCookie('isLogin', 'true', { maxAge: 7 * 24 * 60 * 60 });
-                navigate('/');
+            setIsLoginValid(true);
+            setCookie('accessToken', await user.getIdToken(), { maxAge: 7 * 24 * 60 * 60 });
+            setCookie('isLogin', 'true', { maxAge: 7 * 24 * 60 * 60 });
+            navigate('/');
 
-                if (saveId) {
-                    setCookie("id", id, { maxAge: 7 * 24 * 60 * 60 });
-                } else {
-                    removeCookie("id");
-                }
-                if (savePassword) {
-                    setCookie("password", password, { maxAge: 7 * 24 * 60 * 60 });
-                } else {
-                    removeCookie("password");
-                }
-            });
+            if (saveId) {
+                setCookie("id", id, { maxAge: 7 * 24 * 60 * 60 });
+            } else {
+                removeCookie("id");
+            }
+            if (savePassword) {
+                setCookie("password", password, { maxAge: 7 * 24 * 60 * 60 });
+            } else {
+                removeCookie("password");
+            }
         } catch (error) {
             alert('아이디 혹은 비밀번호가 일치하지 않습니다. : ' + error);
         }

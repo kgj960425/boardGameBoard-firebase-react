@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
+import { db } from "../firebase/firebase.tsx";
 import ChattingRoom from "../components/chattingRoom";
 
 const WaitingRoom = () => {
