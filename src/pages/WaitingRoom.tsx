@@ -28,7 +28,7 @@ const WaitingRoom = () => {
         const roomData = roomDoc.data();
 
         // 상태가 end 또는 play일 경우 입장 불가
-        if (roomData.state !== "ready") {
+        if (roomData.state !== "waiting") {
           alert("게임이 이미 시작되었거나 종료된 방입니다.");
           navigate("/RoomList");
           return;
@@ -63,7 +63,7 @@ const WaitingRoom = () => {
       <p>게임: {roomInfo.game}</p>
       <p>인원: {roomInfo.players.length} / {roomInfo.maxPlayers}</p>
     </div>
-    <div style={{ position: "relative", width: "100%", height: "100vh" }}>
+    <div>
         {roomId && <ChattingRoom roomId={roomId} currentUser={currentUser} />}
     </div>
     </>

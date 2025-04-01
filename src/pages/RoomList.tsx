@@ -28,7 +28,7 @@ const RoomList = () => {
     try {
       const roomQuery = query(
         collection(db, "A.rooms"),
-        where("state", "!=", "end")
+        where("state", "==", "waiting")
       );
       const roomSnapshot = await getDocs(roomQuery);
       const roomList = roomSnapshot.docs.map((doc) => {
@@ -104,13 +104,13 @@ const RoomList = () => {
           <div className="room-card" key={room.id}>
             <div className="room-card-top">
               <span>{room.game}</span>
-              <span>
-                {room.players}/{room.maxPlayers}명
-              </span>
+              <span>시간제한: 0초</span>
             </div>
             <div className="room-card-title">{room.title}</div>
             <div className="room-card-bottom">
-              <span>시간제한: 0초</span>
+              <span>
+                {room.players}/{room.maxPlayers} 명
+              </span>
               <button
                 className="enter-button"
                 onClick={() => navigateWaitingRoom(room.id)}

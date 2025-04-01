@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Loading from './pages/Loading';
+import { useResponsiveLogger } from "./utils/useResponsiveLogger";
 
 // Layouts
 import LoginLayout from '../src/layouts/LoginLayout';
@@ -20,6 +21,7 @@ import RoomList from './pages/RoomList';
 import WaitingRoom from './pages/WaitingRoom';
 
 function App() {
+  useResponsiveLogger();
   return (
       <Suspense fallback={<Loading />}>
         <Routes>

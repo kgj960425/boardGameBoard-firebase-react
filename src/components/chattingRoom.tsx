@@ -111,7 +111,7 @@ const ChattingRoom = ({ roomId, currentUser }: ChatBoxProps) => {
   };
 
   return (
-    <div className={`chatting-room-wrapper`}>
+    <div className={`chatting-room-wrapper ${!isOpen ? "closed" : ""}`}>
       <div className="chatting-room-toggle">
         <button onClick={() => setIsOpen(!isOpen)}>⛶</button>
       </div>
