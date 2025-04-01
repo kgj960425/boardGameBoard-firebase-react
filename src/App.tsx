@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import React, { Suspense } from 'react';
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Loading from './pages/Loading';
@@ -12,16 +12,16 @@ import PlayRoomLayout from '../src/layouts/PlayRoomLayout';
 
 // Pages
 import Login from './pages/Login';
-import LandingPage from './pages/LandingPage';
-import TraningPage from './pages/TraningPage';
-import AdminPage from './pages/AdminPage';
-import Store from './pages/Store';
-import Upload from './pages/Upload';
 import RoomList from './pages/RoomList';
 import WaitingRoom from './pages/WaitingRoom';
+import useAuthCheck from "./hooks/useAuthCheck.tsx";
+import UserProfileEditor from "./pages/UserProfileEditor.tsx";
 
 function App() {
+  //브라우저 css 모드 체크
   useResponsiveLogger();
+  // 로그이 상태 확인
+  useAuthCheck();
   return (
       <Suspense fallback={<Loading />}>
         <Routes>
@@ -33,12 +33,8 @@ function App() {
 
           {/* 로비/기본 레이아웃 */}
           <Route element={<LobbyLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/Store" element={<Store />} />
-            <Route path="/Upload" element={<Upload />} />
-            <Route path="/TraningPage" element={<TraningPage />} />
-            <Route path="/RoomList" element={<RoomList />} />
-            <Route path="/AdminPage" element={<AdminPage />} />
+            <Route path="/" element={<RoomList />} />
+            <Route path="/UserProfileEditor" element={<UserProfileEditor />} />
           </Route>
 
           {/* 대기방 */}
