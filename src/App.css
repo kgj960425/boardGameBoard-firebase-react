@@ -5,7 +5,7 @@
 }
 
 body {
-  background-color: #2b2b2b; /* 어두운 카지노 테이블 느낌 */
+  background-color: #2b2b2b;
   color: #f2f2f2;
   font-family: 'Noto Sans KR', 'Segoe UI', sans-serif;
   line-height: 1.5;
@@ -17,27 +17,27 @@ body {
 }
 
 #root {
-  max-width: 1280px;
+  max-width: 90%;
   margin: 0 auto;
-  padding: 10px;
+  padding: 2%;
 }
 
-/* === Main Layout === */
+/* ===== 공통 레이아웃 ===== */
 main {
-  padding: 24px;
+  padding: 3%;
   background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 16px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
-  min-height: 600px;
+  border-radius: 2%;
+  box-shadow: 0 0 1vw rgba(0, 0, 0, 0.6);
+  min-height: 60vh;
 }
 
-/* === Common Buttons === */
+/* ===== 버튼 ===== */
 button {
   background-color: #03c75a;
   color: white;
   border: none;
   border-radius: 6px;
-  padding: 8px 16px;
+  padding: 1% 2%;
   cursor: pointer;
   font-weight: bold;
   transition: background-color 0.2s;
@@ -47,17 +47,18 @@ button:hover {
   background-color: #02b24b;
 }
 
-/* === Table Styling === */
+/* ===== 테이블 ===== */
 table {
   border-collapse: collapse;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.05);
   color: #f1f1f1;
+  font-size: 1em;
 }
 
 th, td {
   border: 1px solid #444;
-  padding: 10px;
+  padding: 0.8em;
   text-align: center;
 }
 
@@ -65,7 +66,7 @@ th {
   background-color: rgba(0, 0, 0, 0.3);
 }
 
-/* === Utility === */
+/* ===== 유틸리티 ===== */
 .text-center {
   text-align: center;
 }
@@ -81,23 +82,33 @@ th {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-/* === Responsive === */
+/* ======== 📱 모바일 (최대 768px) ======== */
 @media (max-width: 768px) {
   body {
     font-size: 13px;
   }
 
+  #root {
+    max-width: 94%;
+    padding: 4%;
+  }
+
   nav {
     flex-direction: column;
-    gap: 12px;
-    padding: 12px;
+    gap: 3%;
+    padding: 3%;
   }
 
   main {
-    padding: 16px;
+    padding: 4%;
   }
 
   button {
+    padding: 1% 2%;
+  }
+
+  /* 100% 너비가 필요한 버튼만 별도 클래스 */
+  .full-width-button {
     width: 100%;
   }
 
@@ -106,9 +117,14 @@ th {
   }
 }
 
+/* ======== 💻 태블릿 (769px ~ 1280px) ======== */
 @media (min-width: 769px) and (max-width: 1280px) {
   body {
     font-size: 14px;
+  }
+
+  #root {
+    max-width: 95%;
   }
 
   nav {
@@ -117,24 +133,25 @@ th {
   }
 
   main {
-    padding: 24px 32px;
+    padding: 4%;
   }
 }
 
+/* ======== 🖥 데스크탑 (1281px 이상) ======== */
 @media (min-width: 1281px) {
   body {
     font-size: 15px;
   }
 
   #root {
-    max-width: 1440px;
+    max-width: 1200px;
   }
 
   nav {
-    gap: 30px;
+    gap: 2%;
   }
 
   main {
-    padding: 32px;
+    padding: 3%;
   }
 }

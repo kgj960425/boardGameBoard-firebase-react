@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { db } from './firebase';
-import { getDocs, query, where } from "firebase/firestore";
-import { collection } from "firebase/firestore";
+import { db } from "./firebase";
+import { getDocs, query, where, collection } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import './RoomList.css';
-// import CreateRoomModal from "../modals/CreateRoomModal";
+import "./RoomList.css";
 
 interface Room {
   title: string;
@@ -18,51 +16,45 @@ interface Room {
   id: string;
 }
 
-//player001
 const RoomList = () => {
-  const [ rooms, setRooms ] = useState<Room[]>([]);
-  // const [modalOpen, setModalOpen] = useState(false);
+  const [rooms, setRooms] = useState<Room[]>([]);
   const navigate = useNavigate();
-  
-  //대기방으로 이동
-  const navigateWaitingRoom = ( roomId: string ) => {
-    navigate(`/room/${roomId}/wait`);
-  }
 
-  //방 목록 조회
+  const navigateWaitingRoom = (roomId: string) => {
+    navigate(`/room/${roomId}/wait`);
+  };
+
   const searchRoomList = async () => {
     try {
-      //                                                 필드 레벨에서 'state' 컬럼을 찾고 값이 end인 document 제외
-      const roomQuery = query(collection(db, 'A.rooms'), where("state", "!=", "end"));
+      const roomQuery = query(
+        collection(db, "A.rooms"),
+        where("state", "!=", "end")
+      );
       const roomSnapshot = await getDocs(roomQuery);
       const roomList = roomSnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
-            id: doc.id,
-            title: data.title,
-            state: data.state,
-            players: data.players.length,
-            passwordYn: data.passwordYn,
-            password: data.password,
-            messages: data.messages,
-            maxPlayers: data.maxPlayers,
-            game: data.game,
+          id: doc.id,
+          title: data.title,
+          state: data.state,
+          players: data.players.length,
+          passwordYn: data.passwordYn,
+          password: data.password,
+          messages: data.messages,
+          maxPlayers: data.maxPlayers,
+          game: data.game,
         };
-    });
-      
-    setRooms(roomList);
-    
+      });
+
+      setRooms(roomList);
     } catch (error) {
-      
+      console.error("방 목록 조회 실패", error);
     }
-  } 
+  };
 
   useEffect(() => {
-    
+    searchRoomList();
   }, []);
-
-  //데이터 항상 자동 최신화
-  searchRoomList();
 
   return (
     <div className="room-list-container">
@@ -71,7 +63,8 @@ const RoomList = () => {
         <button>방 만들기</button>
       </div>
 
-      <table className="room-table">
+      {/* 데스크탑 테이블 */}
+      <table className="room-table desktop-only">
         <thead>
           <tr>
             <th>게임</th>
@@ -86,12 +79,17 @@ const RoomList = () => {
           {rooms.map((room) => (
             <tr key={room.id}>
               <td>{room.game}</td>
-              <td><span>{room.title}</span></td>
+              <td>{room.title}</td>
               <td>{room.state}</td>
               <td>0</td>
-              <td>{room.players}/{room.maxPlayers}</td>
               <td>
-                <button className="enter-button" onClick={() => navigateWaitingRoom(room.id)}>
+                {room.players}/{room.maxPlayers}
+              </td>
+              <td>
+                <button
+                  className="enter-button"
+                  onClick={() => navigateWaitingRoom(room.id)}
+                >
                   입장
                 </button>
               </td>
@@ -99,6 +97,30 @@ const RoomList = () => {
           ))}
         </tbody>
       </table>
+
+      {/* 모바일 카드형 UI */}
+      <div className="room-card-list mobile-only">
+        {rooms.map((room) => (
+          <div className="room-card" key={room.id}>
+            <div className="room-card-top">
+              <span>{room.game}</span>
+              <span>
+                {room.players}/{room.maxPlayers}명
+              </span>
+            </div>
+            <div className="room-card-title">{room.title}</div>
+            <div className="room-card-bottom">
+              <span>시간제한: 0초</span>
+              <button
+                className="enter-button"
+                onClick={() => navigateWaitingRoom(room.id)}
+              >
+                입장
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

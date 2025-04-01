@@ -57,3 +57,66 @@
     background-color: #02b24b;
   }
   
+  /* 기본적으로 모바일 UI는 숨김 */
+.mobile-only {
+  display: none;
+}
+
+/* 뷰포트가 작을 때만 모바일 UI 보이고, 데스크탑 UI는 숨김 */
+@media screen and (max-width: 768px) {
+  .room-table {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  /* 모바일 카드형 UI용 스타일 */
+.room-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.room-card {
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.room-card-top,
+.room-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-card-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #f2f2f2;
+}
+
+.room-card span {
+  font-size: 13px;
+  color: #ccc;
+}
+
+.room-card .enter-button {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  height: auto;
+}
+
+.room-card-bottom {
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+}
