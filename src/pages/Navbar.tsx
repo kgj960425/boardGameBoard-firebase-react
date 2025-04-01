@@ -13,7 +13,7 @@ const Navbar = () => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
             if (user) {
-                const name = user.displayName || "no named";
+                const name = user.displayName || "null";
                 setUserName(name);
             } else {
                 setUserName("로그인 필요");

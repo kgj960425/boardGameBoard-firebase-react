@@ -8,10 +8,6 @@ const WaitingRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const [roomInfo, setRoomInfo] = useState<any>(null);
   const navigate = useNavigate();
-  const currentUser = {
-        uid: "uid1",
-        nickname: "철수"
-    };
 
   useEffect(() => {
     const fetchRoomInfo = async () => {
@@ -64,7 +60,7 @@ const WaitingRoom = () => {
       <p>인원: {roomInfo.players.length} / {roomInfo.maxPlayers}</p>
     </div>
     <div>
-        {roomId && <ChattingRoom roomId={roomId} currentUser={currentUser} />}
+        {roomId && <ChattingRoom roomId={roomId}/>}
     </div>
     </>
   );
