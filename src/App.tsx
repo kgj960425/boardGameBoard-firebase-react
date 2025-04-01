@@ -1,10 +1,11 @@
-import React, { Suspense } from 'react';
+import { Suspense } from 'react';
 import './App.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Loading from './pages/Loading';
+import { useResponsiveLogger } from "./utils/useResponsiveLogger";
 
 // Layouts
-import LoginLayout from '../src/layouts/loginLayout';
+import LoginLayout from '../src/layouts/LoginLayout';
 import LobbyLayout from '../src/layouts/LobbyLayout';
 import WaitingRoomLayout from '../src/layouts/WaitingRoomLayout';
 import PlayRoomLayout from '../src/layouts/PlayRoomLayout';
@@ -16,9 +17,11 @@ import TraningPage from './pages/TraningPage';
 import AdminPage from './pages/AdminPage';
 import Store from './pages/Store';
 import Upload from './pages/Upload';
-import RoomTable from './pages/RoomTable';
+import RoomList from './pages/RoomList';
+import WaitingRoom from './pages/WaitingRoom';
 
 function App() {
+  useResponsiveLogger();
   return (
       <Suspense fallback={<Loading />}>
         <Routes>
@@ -34,13 +37,13 @@ function App() {
             <Route path="/Store" element={<Store />} />
             <Route path="/Upload" element={<Upload />} />
             <Route path="/TraningPage" element={<TraningPage />} />
-            <Route path="/RoomTable" element={<RoomTable />} />
+            <Route path="/RoomList" element={<RoomList />} />
             <Route path="/AdminPage" element={<AdminPage />} />
           </Route>
 
           {/* 대기방 */}
           <Route element={<WaitingRoomLayout />}>
-            <Route path="/room/:roomId/wait" element={<div>대기방 화면</div>} />
+            <Route path="/room/:roomId/wait" element={<WaitingRoom />} />
           </Route>
 
           {/* 게임 플레이 룸 */}

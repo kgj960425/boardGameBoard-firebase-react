@@ -84,8 +84,8 @@ const Navbar = () => {
         </NavLink>
       </div>
       <div>
-        <NavLink to="/RoomTable">
-          RoomTable
+        <NavLink to="/RoomList">
+          RoomList
         </NavLink>
       </div>
       {user && adminUid === user.uid && (

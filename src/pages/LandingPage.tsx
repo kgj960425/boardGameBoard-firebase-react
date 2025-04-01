@@ -35,7 +35,7 @@ const importAllImages = () => {
   
   export default function LectioGame() {
     const [players, setPlayers] = useState(0);
-    const [deck, setDeck] = useState<any[]>([]);
+    // const [setDeck] = useState<any[]>([]);
     const [playerHands, setPlayerHands] = useState<any[][]>([]);
     const [started, setStarted] = useState(false);
   
@@ -52,7 +52,7 @@ const importAllImages = () => {
         }
       }
       setPlayerHands(hands);
-      setDeck(shuffled);
+      //setDeck(shuffled);
       setPlayers(playerCount);
       setStarted(true);
     };

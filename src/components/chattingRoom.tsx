@@ -11,6 +11,7 @@ import {
   limit
 } from "firebase/firestore";
 import { db } from "../pages/firebase";
+import "./ChattingRoom.css";
 
 interface ChatMessage {
   uid: string;
@@ -45,14 +46,12 @@ const ChattingRoom = ({ roomId, currentUser }: ChatBoxProps) => {
 
   const subscribeToMessages = () => {
     const modified = "m" + roomId.slice(1);
-  
-    // query로 감싸고 limit 및 orderBy 적용
     const messageQuery = query(
       collection(db, modified),
       orderBy("createTime", "desc"),
       limit(100)
     );
-  
+
     return onSnapshot(messageQuery, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({
         uid: doc.data().uid,
@@ -61,16 +60,16 @@ const ChattingRoom = ({ roomId, currentUser }: ChatBoxProps) => {
         content: doc.data().content,
         createTime: doc.data().createTime?.toDate?.() || new Date(),
       }));
-  
-      setMessages(msgs.reverse()); // 최신순으로 가져오니까 화면 출력용으로는 역순 처리
-  
+
+      setMessages(msgs.reverse());
+
       const latest = snapshot.docs
         .map(doc => doc.id)
         .filter(id => id.startsWith("msg^"))
         .map(id => parseInt(id.replace("msg^", ""), 10))
         .filter(num => !isNaN(num))
         .sort((a, b) => b - a)[0] || 0;
-  
+
       setLatestId(latest);
     });
   };
@@ -112,72 +111,24 @@ const ChattingRoom = ({ roomId, currentUser }: ChatBoxProps) => {
   };
 
   return (
-    <div style={{
-      position: "absolute",
-      bottom: 20,
-      right: 20,
-      width: isOpen ? 300 : 35,
-      height: isOpen ? 350 : 35,
-      backgroundColor: "rgba(255, 255, 255, 0.85)", // 반투명
-      zIndex: 9999, // 위에 떠있게
-      border: "1px solid #ccc",
-      borderRadius: 8,
-      display: "flex",
-      flexDirection: "column",
-      fontSize: 14,
-      overflow: "hidden",
-      transition: "all 0.3s ease-in-out"
-    }}>
-      {/* 토글 버튼 */}
-      <div style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        padding: "4px 6px",
-        backgroundColor: "#f9f9f9",
-        borderBottom: "1px solid #ddd"
-      }}>
-        <button onClick={() => setIsOpen(!isOpen)} style={{
-          border: "none",
-          background: "none",
-          cursor: "pointer",
-          fontSize: 16
-        }}>
-          {isOpen ? "⛶" : "⛶"}
-        </button>
+    <div className={`chatting-room-wrapper ${!isOpen ? "closed" : ""}`}>
+      <div className="chatting-room-toggle">
+        <button onClick={() => setIsOpen(!isOpen)}>⛶</button>
       </div>
 
-      {/* 채팅 내용 */}
       {isOpen && (
-        <div style={{ flex: 1, overflowY: "auto", padding: "6px 10px" }}>
+        <div className="chatting-room-messages">
           {messages.map((msg, idx) => {
             const isMine = msg.uid === currentUser.uid;
-            const isMessageType = msg.type === "message";
-
             return (
               <div
                 key={idx}
-                style={{
-                  display: "flex",
-                  justifyContent: isMine ? "flex-end" : "flex-start",
-                  marginBottom: 6,
-                  flexDirection: "column",
-                  alignItems: isMine ? "flex-end" : "flex-start",
-                }}
+                className={`chatting-room-message ${isMine ? "mine" : "other"}`}
               >
-                {!isMine && isMessageType && (
-                  <div style={{ fontSize: 12, color: "#888", marginBottom: 2 }}>
-                    {msg.nickname}
-                  </div>
+                {!isMine && (
+                  <div className="chatting-room-nickname">{msg.nickname}</div>
                 )}
-                <div
-                  style={{
-                    backgroundColor: isMine ? "#fff3b0" : "#f0f0f0",
-                    padding: "8px 12px",
-                    borderRadius: 16,
-                    maxWidth: "75%",
-                    wordBreak: "break-word"
-                  }}
-                >
+                <div className={`chatting-room-bubble ${isMine ? "mine" : "other"}`}>
                   {msg.content}
                 </div>
               </div>
@@ -185,14 +136,12 @@ const ChattingRoom = ({ roomId, currentUser }: ChatBoxProps) => {
           })}
           <div ref={scrollRef} />
         </div>
-      )}
+    )}
 
-      {/* 입력창 */}
       {isOpen && (
-        <div style={{ display: "flex", borderTop: "1px solid #eee" }}>
+        <div className="chatting-room-input">
           <input
             ref={inputRef}
-            style={{ flex: 1, border: "none", padding: 8 }}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => {
@@ -207,7 +156,7 @@ const ChattingRoom = ({ roomId, currentUser }: ChatBoxProps) => {
             }}
             placeholder="메시지를 입력하세요."
           />
-          <button onClick={sendMessage} style={{ padding: "8px 12px" }}>전송</button>
+          <button onClick={sendMessage}>전송</button>
         </div>
       )}
     </div>
