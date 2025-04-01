@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { setCookie, getCookie, removeCookie } from '../utils/CookieUtils.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useLoginAction } from '../stores/LoginStore';
-import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 const auth = getAuth();
 
