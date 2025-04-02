@@ -79,18 +79,19 @@ export default function UserProfileEditor() {
                             onChange={(e) => setPhotoURL(e.target.value)}
                             placeholder="https://github.com/{id}.jpg"
                         />
-                        <div className="url-explanation">프로필 사진 url은 본인 github 프로필 사진 설정 후 예시 url과 같이 id를 넣어서 설정시 github의 프로필 사진 사용 가능</div>
+                        <div className="url-explanation">
+                            프로필 사진 url은 본인 github 프로필 사진 설정 후 예시 url과 같이 id를 넣어서 설정시 github의 프로필 사진 사용 가능
+                        </div>
                     </div>
 
-                    <div className="form-row">
+                    <div className="form-row flex-between">
                         <label>이메일 인증 여부</label>
                         <div>{emailVerified ? "✅ 인증됨" : "❌ 미인증"}</div>
-                    </div>
-
-                    <div className="form-actions">
-                        <button className="btn confirm" onClick={handleUpdate}>
-                            수정
-                        </button>
+                        <div className="verify-status-with-button">
+                            <button className="btn confirm" onClick={handleUpdate}>
+                                수정
+                            </button>
+                        </div>
                     </div>
 
                     {message && <div className="form-message">{message}</div>}
