@@ -1,70 +1,127 @@
 .room-list-container {
-    width: 100%;
-    max-width: 1220px;
-    margin: 0 auto;
-    padding: 0px 12px;
-  }
-  
-  .room-list-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  
-  .room-list-header button {
-    font-size: 15px;
-    padding: 10px 24px;
-    border-radius: 30px;
-  }
-  
-  .room-table {
-    border-collapse: collapse;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #f1f1f1;
-    margin-top: 16px;
-    font-size: 13px; /* ✅ 폰트 줄임 */
-  }
-  
-  .room-table th,
-  .room-table td {
-    border: 1px solid #444;
-    padding: 6px 8px; /* ✅ 세로/가로 padding 축소 */
-    text-align: center;
-    word-break: keep-all;
-    height: 36px; /* ✅ 행 높이 줄이기 */
-  }
-  
-  .room-table th {
-    background-color: rgba(0, 0, 0, 0.3);
-    font-size: 12px;
-  }
-  
-  .room-table .enter-button {
-    height: 28px;
-    font-size: 12px;  /* ✅ 버튼도 작게 */
-    padding: 0 12px;
-    border-radius: 6px;
-    background-color: #03c75a;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .room-table .enter-button:hover {
-    background-color: #02b24b;
-  }
-  
-  /* 기본적으로 모바일 UI는 숨김 */
+  width: 100%;
+  max-width: 1220px;
+  margin: 0 auto;
+  padding: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #f1f1f1;
+}
+
+.room-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #FFD700;
+}
+
+.room-list-header button {
+  font-size: 15px;
+  padding: 10px 24px;
+  border-radius: 30px;
+  background-color: #FF4444;
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(255, 0, 0, 0.3);
+}
+
+.room-list-header button:hover {
+  background-color: #cc0000;
+}
+
+.room-table-wrapper {
+  width: 100%;
+}
+
+.room-table-head {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #2b0000;
+}
+
+.room-table-body-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE, Edge */
+}
+
+.room-table-body-scroll::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  display: none;                   /* Chrome, Safari */
+}
+
+.room-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  background-color: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  color: #f1f1f1;
+  box-sizing: border-box;
+}
+
+.room-table th:nth-child(1) { width: 15%; }  /* 게임 */
+.room-table td:nth-child(1) { width: 15%; }
+
+.room-table th:nth-child(2) { width: 30%; }  /* 방 제목 */
+.room-table td:nth-child(2) { width: 30%; }
+
+.room-table th:nth-child(3) { width: 15%; }  /* 게임 상태 */
+.room-table td:nth-child(3) { width: 15%; }
+
+.room-table th:nth-child(4) { width: 15%; }  /* 시간 제한 */
+.room-table td:nth-child(4) { width: 15%; }
+
+.room-table th:nth-child(5) { width: 15%; }  /* 인원 수 */
+.room-table td:nth-child(5) { width: 15%; }
+
+.room-table th:nth-child(6) { width: 10%; }  /* 입장 버튼 */
+.room-table td:nth-child(6) { width: 10%; }
+
+
+.room-table th,
+.room-table td {
+  border: 1px solid #555;
+  padding: 6px 8px;
+  text-align: center;
+  height: 36px;
+}
+
+.room-table th {
+  color: #FFD700;
+  font-size: 12px;
+  background-color: #2b0000;
+}
+
+.room-table .enter-button {
+  height: 28px;
+  font-size: 12px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background-color: #03c75a;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.room-table .enter-button:hover {
+  background-color: #02b24b;
+}
+
+/* 모바일 숨김 */
 .mobile-only {
   display: none;
 }
 
-/* 뷰포트가 작을 때만 모바일 UI 보이고, 데스크탑 UI는 숨김 */
 @media screen and (max-width: 768px) {
-  .room-table {
+  .room-table-wrapper {
     display: none;
   }
 
@@ -72,51 +129,63 @@
     display: block;
   }
 
-  /* 모바일 카드형 UI용 스타일 */
-.room-card-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+  .room-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 
-.room-card {
-  background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 12px;
-  padding: 12px 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+    max-height: 65vh;
+    overflow-y: auto;
 
-.room-card-top,
-.room-card-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
 
-.room-card-title {
-  font-size: 14px;
-  font-weight: bold;
-  color: #f2f2f2;
-}
+  .room-card {
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    padding: 12px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 
-.room-card span {
-  font-size: 13px;
-  color: #ccc;
-}
+  .room-card-top,
+  .room-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
 
-.room-card .enter-button {
-  font-size: 13px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  height: auto;
-}
+  .room-card-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #FFD700;
+  }
 
-.room-card-bottom {
-  justify-content: flex-end;
-  gap: 12px;
-}
+  .room-card span {
+    font-size: 13px;
+    color: #ccc;
+  }
 
+  .room-card .enter-button {
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background-color: #03c75a;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  .room-card .enter-button:hover {
+    background-color: #02b24b;
+  }
+
+  .room-card-bottom {
+    justify-content: flex-end;
+    gap: 12px;
+  }
 }

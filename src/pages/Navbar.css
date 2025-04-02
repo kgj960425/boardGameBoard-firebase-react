@@ -1,36 +1,59 @@
 nav {
-  background-color: rgba(0, 0, 0, 0.8);
-  padding: 6px 16px;
+  background-color: #1c1c1c; /* 다크 벨벳 느낌 */
+  padding: 10px 20px;
   border-radius: 12px;
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.2); /* 골드빛 그림자 */
 }
 
+/* 왼쪽 메뉴 */
+.nav-left {
+  display: flex;
+  gap: 24px;
+}
+
+/* 오른쪽 닉네임 + 버튼 */
+.nav-right {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* 메뉴 링크 */
 nav a {
-  color: #03c75a;
+  color: #FFD700; /* 순금 느낌 */
   font-weight: bold;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 nav a:hover {
-  color: #00a84f;
+  color: #FFA500; /* 오렌지 골드 */
 }
 
+/* 닉네임 텍스트 */
+.nav-right span {
+  color: #f0f0f0;
+  font-weight: 600;
+}
+
+/* 로그아웃 버튼 */
 nav button {
-  margin-left: auto;
-  background-color: #03c75a;
+  background-color: #FF4444; /* 칩 빨강 */
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 8px 16px;
   cursor: pointer;
   font-weight: bold;
-  transition: background-color 0.2s;
+  box-shadow: 0 0 6px rgba(255, 0, 0, 0.4);
+  transition: background-color 0.2s, transform 0.1s;
 }
 
 nav button:hover {
-  background-color: #02b24b;
+  background-color: #cc0000;
+  transform: scale(1.05);
 }

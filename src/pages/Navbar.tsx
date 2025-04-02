@@ -35,10 +35,14 @@ const Navbar = () => {
 
     return (
         <nav className="navbar">
-            <div><NavLink to="/RoomList">Home</NavLink></div>
-            <div><NavLink to="/UserProfileEditor">내 정보 수정</NavLink></div>
-            <div style={{ color: "white" }}>{userName} 님</div>
-            <button onClick={handleSignOut}>로그아웃</button>
+            <div className="nav-left">
+                <NavLink to="/RoomList">Home</NavLink>
+                <NavLink to="/UserProfileEditor">내 정보 수정</NavLink>
+            </div>
+            <div className="nav-right">
+                <span style={{ color: "white" }}>{userName} 님</span>
+                <button onClick={handleSignOut}>로그아웃</button>
+            </div>
         </nav>
     );
 };
