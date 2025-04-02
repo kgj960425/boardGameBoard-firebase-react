@@ -12,6 +12,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/ingest",
+        "destination": "/api/ingest.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

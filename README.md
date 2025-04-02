@@ -3,13 +3,88 @@
 ## react 셋팅
 
 1) node.js 설치 
-2) terminal에서 npm create vite@lastest (프로젝트명) - vite의 마지막 버전으로 (프로젝트명) 폴더 안에 react 프로젝트 폴더 생성 ex) npm create vite@lastest beardgameboard
+2) terminal에서 npm create vite@lastest (프로젝트명) - vite의 마지막 버전으로 (프로젝트명) 폴더 안에 react 프로젝트 폴더 생성 ex) npm create vite@lastest beardgameboard 
+3) npm install zustand
+4) npm install -g firebase-tools 
+5) npm install vite
+6) firebase login
+7) firebase init
+   PS C:\Users\user\IdeaProjects\boardGameBoard-firebase-react> firebase init
+
+   ######## #### ########  ######## ########     ###     ######  ########
+   ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+   ######    ##  ########  ######   ########  #########  ######  ######
+   ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+   ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+C:\Users\user\IdeaProjects\boardGameBoard-firebase-react
+
+Before we get started, keep in mind:
+
+* You are initializing within an existing Firebase project directory
+
+? Are you ready to proceed? Yes
+? Which Firebase features do you want to set up for this directory? Press Space to select features, then Enter to confirm your choices. Firestore:
+Configure security rules and indexes files for Firestore, Hosting: Configure files for Firebase Hosting and (optionally) set up GitHub Action
+deploys
+
+=== Project Setup
+
+First, let's associate this project directory with a Firebase project.
+You can create multiple project aliases by running firebase use --add,
+but for now we'll just set up a default project.
+
+i  Using project boardgameboard-35ea9 (BoardGameBoard)
+
+=== Firestore Setup
+
+Firestore Security Rules allow you to define how and when to allow
+requests. You can keep these rules in your project directory
+and publish them with firebase deploy.
+
+? What file should be used for Firestore Rules? firestore.rules
+? File firestore.rules already exists. Do you want to overwrite it with the Firestore Rules from the Firebase Console? No
+
+Firestore indexes allow you to perform complex queries while
+maintaining performance that scales with the size of the result
+set. You can keep index definitions in your project directory
+and publish them with firebase deploy.
+
+? What file should be used for Firestore indexes? firestore.indexes.json
+? File firestore.indexes.json already exists. Do you want to overwrite it with the Firestore Indexes from the Firebase Console? No
+
+=== Hosting Setup
+
+Your public directory is the folder (relative to your project directory) that
+will contain Hosting assets to be uploaded with firebase deploy. If you
+have a build process for your assets, use your build's output directory.
+
+? What do you want to use as your public directory? build
+? Configure as a single-page app (rewrite all urls to /index.html)? No
+? Set up automatic builds and deploys with GitHub? No
++  Wrote build/404.html
++  Wrote build/index.html
+
+i  Writing configuration info to firebase.json...
+i  Writing project information to .firebaserc...
+
++  Firebase initialization complete!
 
 (주의)   
 1) command not found의 경우 아직 node의 npm 명령어를 인식 못한 경우 - vscode 및 노트북 껏다 켜기
 2) 허가되지 않은 스크립트 입니다의 경우 - Powershell 검색 - 우클릭 - 관리자 권한으로 실행한 뒤 Set-ExecutionPolicy Unrestricted 입력해서 실행정책 변경
 
 ## firebase 셋팅
+무료 spark 요금제로 사용하는 기능.
+
+Hosting - 버전, 도메인, 베타 채널 관리.
+athentication - 인증
+Cloud Firestore - DB
+Analytics - 앱 사용 이력 적재 및 분석
+Cloud Messaging (FCM) 인증과 연계 하여 계정 찾기 및 알림.
+
 # 조코딩과 https://kmuhan-study.tistory.com/2 을 참고하였다
 
 1) npm install firebase

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import {getAuth, setPersistence, browserLocalPersistence} from "firebase/auth";
 
 //React앱의 경우 아래와 같이 getFirestore 메서드를 활용해 Cloud Firestore를 연동 가능하다.
 
@@ -16,5 +17,13 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-export { db };
+setPersistence(auth, browserLocalPersistence)
+    .then(() => {
+    })
+    .catch((error) => {
+        console.log("error : ",error)
+    });
+
+export { app, db, auth };
