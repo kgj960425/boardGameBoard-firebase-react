@@ -34,6 +34,7 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [latestId, setLatestId] = useState(0);
+  const isMobile = window.innerWidth <= 1080;
 
   useEffect(() => {
     const fetchMessageCollectionId = async () => {
@@ -111,12 +112,18 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
   };
 
   return (
-    <Rnd>
-      <div className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`}>
-        <div className="chatting-room-toggle">
-          <button onClick={() => setIsOpen(!isOpen)}>⛶</button>
-        </div>
-
+    <Rnd
+      default={{
+        x: isMobile ? window.innerWidth * 0.45 : window.innerWidth - 420,
+        y: isMobile ? window.innerHeight * 0.6 : window.innerHeight - 450,
+        width: isMobile ? window.innerWidth * 0.5 : 360,
+        height: isMobile ? window.innerHeight * 0.5 : 400,
+      }}
+    >
+      <div className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`} onDoubleClick={() => setIsOpen(!isOpen)}>
+        {!isOpen && (
+          <div className="chatting-room-icon">C</div>
+        )}
         {isOpen && (
           <>
             <div className="chatting-room-messages">
