@@ -37,6 +37,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="nav-left">
                 <NavLink to="/RoomList">Home</NavLink>
+                <NavLink to="/CommunityPage">Community</NavLink>
                 <NavLink to="/UserProfileEditor">내 정보 수정</NavLink>
             </div>
             <div className="nav-right">

@@ -16,6 +16,7 @@ import RoomList from './pages/RoomList';
 import WaitingRoom from './pages/WaitingRoom';
 import useAuthCheck from "./hooks/useAuthCheck.tsx";
 import UserProfileEditor from "./pages/UserProfileEditor.tsx";
+import CommunityPage from "./pages/CommunityPage.tsx"
 
 function App() {
   //브라우저 css 모드 체크
@@ -35,6 +36,7 @@ function App() {
           <Route element={<LobbyLayout />}>
             <Route path="/" element={<RoomList />} />
             <Route path="/UserProfileEditor" element={<UserProfileEditor />} />
+            <Route path="/CommunityPage" element={<CommunityPage />} />
           </Route>
 
           {/* 대기방 */}
