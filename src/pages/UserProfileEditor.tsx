@@ -80,7 +80,7 @@ export default function UserProfileEditor() {
                             placeholder="https://github.com/{id}.jpg"
                         />
                         <div className="url-explanation">
-                            프로필 사진 url은 본인 github 프로필 사진 설정 후 예시 url과 같이 id를 넣어서 설정시 github의 프로필 사진 사용 가능
+                        unsplash 에서 제공 받은 url 기입 혹은 본인 github 프로필 사진 설정 후 예시 url과 같이 id를 넣어서 설정시 github의 프로필 사진 사용 가능
                         </div>
                     </div>
 

@@ -55,7 +55,7 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
     return onSnapshot(messageQuery, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({
         uid: doc.data().uid,
-        nickname: doc.data().nickname || "이름없는놈",
+        nickname: doc.data().nickname || "bot",
         type: doc.data().type || "message",
         content: doc.data().content,
         createTime: doc.data().createTime?.toDate?.() || new Date(),
