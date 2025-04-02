@@ -52,16 +52,14 @@ const WaitingRoom = () => {
 
   return (
     <>
-    <div style={{ backgroundColor: "#000", color: "#fff", width: "100%", height: "100vh", padding: "40px" }}>
+    <div style={{ backgroundColor: "#000", color: "#fff", width: "100%", height: "100%", padding: "40px" }}>
       <h1>대기방</h1>
       <p>방 ID: {roomId}</p>
       <p>방 제목: {roomInfo.title}</p>
       <p>게임: {roomInfo.game}</p>
       <p>인원: {roomInfo.players.length} / {roomInfo.maxPlayers}</p>
     </div>
-    <div>
-        {roomId && <ChattingRoom roomId={roomId}/>}
-    </div>
+    {roomId && <ChattingRoom roomId={roomId}/>}
     </>
   );
 };

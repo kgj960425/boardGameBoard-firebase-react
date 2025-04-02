@@ -6,9 +6,7 @@ export default function PlayRoomLayout() {
     return (
     <div className="PlayRoom-layout">
       <Outlet />
-      <div style={{ position: "relative", width: "100%", height: "100vh" }}>
-          {roomId && <ChattingRoom roomId={roomId}/>}
-      </div>
+      {roomId && <ChattingRoom roomId={roomId}/>}
     </div>
     );
 }

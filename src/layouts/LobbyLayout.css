@@ -1,0 +1,26 @@
+/* 전체 레이아웃 구조 */
+.lobby-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* 스크롤 금지 */
+  }
+  
+  /* 네비게이션은 고정 높이 */
+  .lobby-layout > nav {
+    flex: 0 0 auto;
+  }
+  
+  /* 메인 콘텐츠는 남은 공간만큼 확장 */
+  .lobby-layout > main {
+    flex: 1 1 auto;
+    overflow: hidden; /* 여기서도 스크롤 금지 */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 2%;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 2%;
+    box-shadow: 0 0 1vw rgba(0, 0, 0, 0.6);
+  }

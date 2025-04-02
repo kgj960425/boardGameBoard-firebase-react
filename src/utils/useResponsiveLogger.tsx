@@ -1,12 +1,11 @@
-// hooks/useResponsiveLogger.ts
 import { useEffect, useRef } from "react";
 
-type DeviceType = "mobile" | "tablet" | "desktop";
+// 디바이스 타입은 이제 mobile / web 두 개만!
+type DeviceType = "mobile" | "web";
 
+// 갤럭시 퀀텀4 기준(1080px 이하면 모바일)
 const getDeviceType = (width: number): DeviceType => {
-  if (width <= 768) return "mobile";
-  if (width <= 1280) return "tablet";
-  return "desktop";
+  return width <= 1080 ? "mobile" : "web";
 };
 
 export const useResponsiveLogger = () => {
@@ -14,12 +13,12 @@ export const useResponsiveLogger = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      // 디바운싱: 기존 타이머 제거
+      // 디바운싱 처리
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
 
-      // 2초 후 콘솔 출력
+      // 2초 뒤 로그 출력
       timeoutRef.current = window.setTimeout(() => {
         const width = window.innerWidth;
         const height = window.innerHeight;
@@ -32,6 +31,10 @@ export const useResponsiveLogger = () => {
       }, 2000);
     };
 
+    // 초기 진입 시 한 번 실행
+    handleResize();
+
+    // resize 이벤트 리스너 등록
     window.addEventListener("resize", handleResize);
 
     return () => {

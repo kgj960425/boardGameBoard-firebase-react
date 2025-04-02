@@ -1,18 +1,18 @@
+/* 공통 스타일 */
 .chatting-room-wrapper {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 25% !important;
-  height: 70% !important;
-  background-color: rgba(255, 255, 255, 0.25);
-  z-index: 1000;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  overflow: hidden;
   transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+/* 열려 있는 상태 */
+.chatting-room-wrapper.open {
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* 최소화 상태 */
@@ -25,11 +25,9 @@
   justify-content: center;
   align-items: center;
   background-color: rgba(60, 60, 60, 0.8) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   overflow: hidden !important;
 }
 
-/* 최소화 시 내부 요소 숨김 */
 .chatting-room-wrapper.closed .chatting-room-messages,
 .chatting-room-wrapper.closed .chatting-room-input {
   display: none !important;
@@ -39,7 +37,7 @@
 .chatting-room-toggle {
   all: unset;
   width: 100%;
-  height: 36px; /* ← 높이 명시 */
+  height: 36px;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -54,6 +52,7 @@
   color: white;
 }
 
+/* 메시지 영역 */
 .chatting-room-messages {
   flex: 1;
   overflow-y: auto;
@@ -61,7 +60,6 @@
   box-sizing: border-box;
 }
 
-/* 메시지 한 줄 */
 .chatting-room-message {
   display: flex;
   flex-direction: column;
@@ -76,14 +74,12 @@
   align-items: flex-start;
 }
 
-/* 닉네임 (상대방만 표시) */
 .chatting-room-nickname {
   font-size: 12px;
   color: #888;
   margin-bottom: 2px;
 }
 
-/* 말풍선 스타일 */
 .chatting-room-bubble {
   padding: 8px 12px;
   border-radius: 16px;
@@ -101,7 +97,7 @@
   color: #000;
 }
 
-/* 입력창 */
+/* 입력 영역 */
 .chatting-room-input {
   display: flex;
   border-top: 1px solid #eee;
@@ -127,7 +123,7 @@
 
 /* 모바일 대응 */
 @media screen and (max-width: 768px) {
-  .chatting-room-wrapper {
+  .chatting-room-wrapper.open {
     width: 90% !important;
     height: 60% !important;
     right: 5% !important;
@@ -146,7 +142,7 @@
   }
 }
 
-/* 최소화 상태에선 아이콘 버튼이 정사각형 내부에 정확히 위치하도록 조정 */
+/* 최소화 시 버튼 정렬 */
 .chatting-room-wrapper.closed .chatting-room-toggle {
   all: unset;
   width: 100%;
@@ -158,7 +154,6 @@
   box-sizing: border-box;
 }
 
-/* 아이콘 버튼 자체 */
 .chatting-room-wrapper.closed .chatting-room-toggle button {
   all: unset;
   font-size: 18px;

@@ -1,9 +1,12 @@
 import { Outlet } from 'react-router-dom';
+import './WaitingRoomLayout.css'; // CSS 따로 관리 추천
 
 export default function WaitingRoomLayout() {
   return (
-    <div className="WaitingRoom-layout">
-      <Outlet />
+    <div className="waitingroom-layout">
+      <main>
+        <Outlet />
+      </main>
     </div>
   );
 }

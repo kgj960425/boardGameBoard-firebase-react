@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase.tsx";
 import "./ChattingRoom.css";
+import { Rnd } from "react-rnd";
 
 interface ChatMessage {
   uid: string;
@@ -46,9 +47,9 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
   const subscribeToMessages = () => {
     const modified = "m" + roomId.slice(1);
     const messageQuery = query(
-        collection(db, modified),
-        orderBy("createTime", "desc"),
-        limit(100)
+      collection(db, modified),
+      orderBy("createTime", "desc"),
+      limit(100)
     );
 
     return onSnapshot(messageQuery, (snapshot) => {
@@ -63,11 +64,11 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
       setMessages(msgs.reverse());
 
       const latest = snapshot.docs
-          .map(doc => doc.id)
-          .filter(id => id.startsWith("msg^"))
-          .map(id => parseInt(id.replace("msg^", ""), 10))
-          .filter(num => !isNaN(num))
-          .sort((a, b) => b - a)[0] || 0;
+        .map(doc => doc.id)
+        .filter(id => id.startsWith("msg^") )
+        .map(id => parseInt(id.replace("msg^", ""), 10))
+        .filter(num => !isNaN(num))
+        .sort((a, b) => b - a)[0] || 0;
 
       setLatestId(latest);
     });
@@ -110,55 +111,52 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
   };
 
   return (
-      <div className={`chatting-room-wrapper ${!isOpen ? "closed" : ""}`}>
+    <Rnd>
+      <div className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`}>
         <div className="chatting-room-toggle">
           <button onClick={() => setIsOpen(!isOpen)}>⛶</button>
         </div>
 
         {isOpen && (
+          <>
             <div className="chatting-room-messages">
               {messages.map((msg, idx) => {
                 const isMine = msg.uid === auth.currentUser?.uid;
                 return (
-                    <div
-                        key={idx}
-                        className={`chatting-room-message ${isMine ? "mine" : "other"}`}
-                    >
-                      {!isMine && (
-                          <div className="chatting-room-nickname">{msg.nickname}</div>
-                      )}
-                      <div className={`chatting-room-bubble ${isMine ? "mine" : "other"}`}>
-                        {msg.content}
-                      </div>
-                    </div>
+                  <div key={idx} className={`chatting-room-message ${isMine ? "mine" : "other"}`}>
+                    {!isMine && (
+                      <div className="chatting-room-nickname">{msg.nickname}</div>
+                    )}
+                    <div className={`chatting-room-bubble ${isMine ? "mine" : "other"}`}>{msg.content}</div>
+                  </div>
                 );
               })}
               <div ref={scrollRef} />
             </div>
-        )}
 
-        {isOpen && (
             <div className="chatting-room-input">
               <input
-                  ref={inputRef}
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      if (!isOpen) {
-                        setIsOpen(true);
-                        setTimeout(() => inputRef.current?.focus(), 100);
-                      } else {
-                        sendMessage();
-                      }
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    if (!isOpen) {
+                      setIsOpen(true);
+                      setTimeout(() => inputRef.current?.focus(), 100);
+                    } else {
+                      sendMessage();
                     }
-                  }}
-                  placeholder="메시지를 입력하세요."
+                  }
+                }}
+                placeholder="메시지를 입력하세요."
               />
               <button onClick={sendMessage}>전송</button>
             </div>
+          </>
         )}
       </div>
+    </Rnd>
   );
 };
 
