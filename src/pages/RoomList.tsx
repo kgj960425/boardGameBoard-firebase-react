@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { db } from "../firebase/firebase.tsx";
+import { db, auth } from "../firebase/firebase.tsx";
 import { getDocs, query, where, collection } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import "./RoomList.css";
+import Modal from "../components/Modal";
+import RoomCreateForm from "../components/RoomCreateForm";
 
 interface Room {
   id: string;
@@ -19,6 +21,7 @@ interface Room {
 const RoomList = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const navigate = useNavigate();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const fetchRooms = async () => {
     try {
@@ -56,8 +59,17 @@ const RoomList = () => {
     <div className="room-list-container">
       <div className="room-list-header">
         <h2>방 목록</h2>
-        <button>방 만들기</button>
+        <button onClick={() => setIsCreateOpen(true)}>방 만들기</button>
       </div>
+
+      {isCreateOpen && (
+        <Modal onClose={() => setIsCreateOpen(false)}>
+          <RoomCreateForm
+            currentUser={{ uid: auth.currentUser?.uid || "anonymous"}}
+            onClose={() => setIsCreateOpen(false)}
+          />
+        </Modal>
+      )}
 
       {/* 데스크탑 테이블 */}
       <div className="room-table-wrapper desktop-only">
