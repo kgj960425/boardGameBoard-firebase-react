@@ -1,86 +1,85 @@
 .casino-wrapper {
-    padding: 1.5rem;
-    border: 3px solid gold;
-    border-radius: 16px;
-    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-    color: #ffe;
-    max-width: 480px;
-    margin: 0 auto;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    box-shadow: 0 0 20px gold;
-  }
-  
-  .casino-title {
-    font-size: 1.6rem;
-    font-weight: bold;
-    color: gold;
-    text-align: center;
-    margin-bottom: 1.5rem;
-    text-shadow: 0 0 5px #ffd700;
-  }
-  
-  .casino-option-group {
-    margin-bottom: 1.2rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .casino-input {
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: none;
-    background-color: #333;
-    color: #fefefe;
-    font-size: 1rem;
-  }
-  
-  .casino-button-group {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-  
-  .casino-button {
-    padding: 8px 14px;
-    border-radius: 8px;
-    background-color: #444;
-    color: #ffe;
-    border: 1px solid #aaa;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-  }
-  
-  .casino-button:hover {
-    background-color: #666;
-    color: gold;
-    border-color: gold;
-  }
-  
-  .casino-button.active {
-    background-color: gold;
-    color: black;
-    font-weight: bold;
-    box-shadow: 0 0 6px #ffd700;
-  }
-  
-  .casino-create-button {
-    margin-top: 1.5rem;
-    width: 100%;
-    padding: 12px;
-    background-color: gold;
-    color: black;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .casino-create-button:hover {
-    background-color: #ffd700;
-    box-shadow: 0 0 10px gold;
-  }
- 
+  padding: 1.5rem;
+  border: 2px solid #bfa847;
+  border-radius: 16px;
+  background: radial-gradient(circle at center, #121212 0%, #0a0a0a 100%);
+  color: #ddd;
+  max-width: 480px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  box-shadow: 0 0 15px rgba(191, 168, 71, 0.3);
+}
+
+.casino-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #c0a000;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 3px #bfa847;
+}
+
+.casino-option-group {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.casino-input {
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: none;
+  background-color: #222;
+  color: #eee;
+  font-size: 1rem;
+}
+
+.casino-button-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.casino-button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  background-color: #2c2c2c;
+  color: #ccc;
+  border: 1px solid #666;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.casino-button:hover {
+  background-color: #3a3a3a;
+  color: #c0a000;
+  border-color: #c0a000;
+}
+
+.casino-button.active {
+  background-color: #c0a000;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(191, 168, 71, 0.5);
+}
+
+.casino-create-button {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 12px;
+  background-color: #bfa847;
+  color: black;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.casino-create-button:hover {
+  background-color: #c8b050;
+  box-shadow: 0 0 8px rgba(191, 168, 71, 0.4);
+}
