@@ -31,7 +31,7 @@ const WaitingRoom = () => {
         }
 
         // 인원이 꽉 찼을 경우 입장 불가
-        if (roomData.players.length >= roomData.maxPlayers) {
+        if (roomData.player.length >= roomData.maxPlayers) {
           alert("방 인원이 가득 찼습니다.");
           navigate("/RoomList");
           return;
@@ -57,7 +57,7 @@ const WaitingRoom = () => {
       <p>방 ID: {roomId}</p>
       <p>방 제목: {roomInfo.title}</p>
       <p>게임: {roomInfo.game}</p>
-      <p>인원: {roomInfo.players.length} / {roomInfo.maxPlayers}</p>
+      <p>인원: {Object.keys(roomInfo.player).length} / {roomInfo.maxPlayers}</p>
     </div>
     {roomId && <ChattingRoom roomId={roomId}/>}
     </>

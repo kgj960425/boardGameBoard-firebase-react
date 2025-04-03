@@ -5,7 +5,7 @@ import {
   serverTimestamp,
   doc,
   getDoc,
-  setDoc,
+  addDoc,
   query,
   orderBy,
   limit
@@ -33,9 +33,9 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [latestId, setLatestId] = useState(0);
   const isMobile = window.innerWidth <= 1080;
 
+  // 메시지 컬렉션 경로 가져오기
   useEffect(() => {
     const fetchMessageCollectionId = async () => {
       const roomDoc = await getDoc(doc(db, "A.rooms", roomId));
@@ -45,15 +45,17 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
     fetchMessageCollectionId();
   }, [roomId]);
 
-  const subscribeToMessages = () => {
-    const modified = "m" + roomId.slice(1);
+  // 메시지 구독 (최신 → 오래된 순으로 정렬 후 reverse)
+  useEffect(() => {
+    if (!messageCollectionId) return;
+  
     const messageQuery = query(
-      collection(db, modified),
+      collection(db, messageCollectionId),
       orderBy("createTime", "desc"),
       limit(100)
     );
-
-    return onSnapshot(messageQuery, (snapshot) => {
+  
+    const unsubscribe = onSnapshot(messageQuery, (snapshot) => {
       const msgs = snapshot.docs.map(doc => ({
         uid: doc.data().uid,
         nickname: doc.data().nickname || "bot",
@@ -61,27 +63,16 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
         content: doc.data().content,
         createTime: doc.data().createTime?.toDate?.() || new Date(),
       }));
-
+  
       setMessages(msgs.reverse());
-
-      const latest = snapshot.docs
-        .map(doc => doc.id)
-        .filter(id => id.startsWith("msg^") )
-        .map(id => parseInt(id.replace("msg^", ""), 10))
-        .filter(num => !isNaN(num))
-        .sort((a, b) => b - a)[0] || 0;
-
-      setLatestId(latest);
     });
-  };
+  
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [messageCollectionId]);
 
-  useEffect(() => {
-    if (!roomId) return;
-    const unsubscribe = subscribeToMessages();
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-    return () => unsubscribe();
-  }, [roomId]);
-
+  // 내가 보낸 메시지일 경우 스크롤 맨 아래로 이동
   useEffect(() => {
     if (messages.length === 0) return;
     const lastMessage = messages[messages.length - 1];
@@ -91,14 +82,12 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
     }
   }, [messages]);
 
+  // 메시지 전송
   const sendMessage = async () => {
     if (!input.trim() || !messageCollectionId) return;
 
-    const newIdString = (latestId + 1).toString().padStart(5, "0");
-    const newDocId = `msg^${newIdString}`;
-
     try {
-      await setDoc(doc(db, messageCollectionId, newDocId), {
+      await addDoc(collection(db, messageCollectionId), {
         uid: auth.currentUser?.uid,
         nickname: auth.currentUser?.displayName || "이름없는놈",
         type: "message",
@@ -120,21 +109,23 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
         height: isMobile ? window.innerHeight * 0.5 : 400,
       }}
     >
-      <div className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`} onDoubleClick={() => setIsOpen(!isOpen)}>
-        {!isOpen && (
+      <div
+        className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`}
+        onDoubleClick={() => setIsOpen(!isOpen)}
+      >
+        {!isOpen ? (
           <div className="chatting-room-icon">C</div>
-        )}
-        {isOpen && (
+        ) : (
           <>
             <div className="chatting-room-messages">
               {messages.map((msg, idx) => {
                 const isMine = msg.uid === auth.currentUser?.uid;
                 return (
                   <div key={idx} className={`chatting-room-message ${isMine ? "mine" : "other"}`}>
-                    {!isMine && (
-                      <div className="chatting-room-nickname">{msg.nickname}</div>
-                    )}
-                    <div className={`chatting-room-bubble ${isMine ? "mine" : "other"}`}>{msg.content}</div>
+                    {!isMine && <div className="chatting-room-nickname">{msg.nickname}</div>}
+                    <div className={`chatting-room-bubble ${isMine ? "mine" : "other"}`}>
+                      {msg.content}
+                    </div>
                   </div>
                 );
               })}
@@ -145,8 +136,8 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
               <input
                 ref={inputRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     if (!isOpen) {
                       setIsOpen(true);

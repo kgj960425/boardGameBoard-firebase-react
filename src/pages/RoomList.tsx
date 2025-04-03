@@ -10,13 +10,14 @@ interface Room {
   id: string;
   title: string;
   state: string;
-  players: number;
+  player: Record<string, string>; // uid: 닉네임 구조
   passwordYn: string;
   password: string;
   messages: string;
   maxPlayers: number;
   game: string;
 }
+
 
 const RoomList = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -33,7 +34,7 @@ const RoomList = () => {
           id: doc.id,
           title: data.title,
           state: data.state,
-          players: data.players?.length || 0,
+          player: data.player || {},
           passwordYn: data.passwordYn,
           password: data.password,
           messages: data.messages,
@@ -94,7 +95,7 @@ const RoomList = () => {
                   <td>{room.title}</td>
                   <td>{room.state}</td>
                   <td>0</td>
-                  <td>{room.players}/{room.maxPlayers}</td>
+                  <td>{Object.keys(room.player).length}/{room.maxPlayers}</td>
                   <td>
                     <button className="enter-button" onClick={() => navigateToRoom(room.id)}>
                       입장
@@ -117,7 +118,7 @@ const RoomList = () => {
             </div>
             <div className="room-card-title">{room.title}</div>
             <div className="room-card-bottom">
-              <span>{room.players}/{room.maxPlayers} 명</span>
+              <span>{Object.keys(room.player).length}/{room.maxPlayers} 명</span>
               <button className="enter-button" onClick={() => navigateToRoom(room.id)}>
                 입장
               </button>
