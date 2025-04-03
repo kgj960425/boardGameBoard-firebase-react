@@ -1,17 +1,18 @@
 // RoomList.tsx
 import { useEffect, useState } from "react";
-import { db, auth } from "../firebase/firebase.tsx";
-import { getDocs, query, where, collection, doc, getDoc, runTransaction } from "firebase/firestore";
+import { db, auth } from "../firebase/firebase";
+import { getDocs, query, where, collection, doc, runTransaction } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import "./RoomList.css";
 import Modal from "../components/Modal";
 import RoomCreateForm from "../components/RoomCreateForm";
+import { cleanupGhostRooms } from "../hooks/cleanUpGhostRooms"; // 경로 확인!
 
 interface Room {
   id: string;
   title: string;
   state: string;
-  player: Record<string, string>;
+  player: Record<string, any>; // nickname, lastActive 등 포함
   passwordYn: string;
   password: string;
   messages: string;
@@ -47,51 +48,46 @@ const RoomList = () => {
       console.error("방 목록 조회 실패", err);
     }
   };
-  
+
   const handleEnterRoom = async (roomId: string) => {
     const uid = auth.currentUser?.uid;
     const nickname = auth.currentUser?.displayName || "익명";
-  
+
     if (!uid) {
       alert("로그인이 필요합니다.");
       return;
     }
-  
+
     const roomRef = doc(db, "A.rooms", roomId);
-  
+
     try {
       await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomRef);
         if (!roomSnap.exists()) {
           throw new Error("방이 존재하지 않습니다.");
         }
-  
+
         const roomData = roomSnap.data();
-  
+
         if (roomData.state !== "waiting") {
           throw new Error("게임이 시작되었거나 종료된 방입니다.");
         }
-  
+
         const currentPlayers = Object.keys(roomData.player || {});
-  
-        // 이미 입장한 유저면 그냥 이동만
         if (currentPlayers.includes(uid)) return;
-  
-        // 인원 초과
         if (currentPlayers.length >= roomData.maxPlayers) {
           throw new Error("방 정원이 가득 찼습니다.");
         }
-  
-        // Firestore 업데이트
+
         transaction.update(roomRef, {
           [`player.${uid}`]: {
             nickname,
             joinedAt: new Date(),
             lastActive: new Date(),
-          }
+          },
         });
       });
-  
+
       navigate(`/room/${roomId}/wait`);
     } catch (err: any) {
       console.error("입장 중 오류", err);
@@ -100,7 +96,11 @@ const RoomList = () => {
   };
 
   useEffect(() => {
-    fetchRooms();
+    const load = async () => {
+      await cleanupGhostRooms(); // 🧹 유령방 정리 먼저
+      await fetchRooms();        // 📦 방 목록 가져오기
+    };
+    load();
   }, []);
 
   return (
@@ -142,7 +142,7 @@ const RoomList = () => {
                   <td>{room.title}</td>
                   <td>{room.state}</td>
                   <td>0</td>
-                  <td>{Object.keys(room.player).length}/{room.maxPlayers}</td>
+                  <td>{Object.keys(room.player || {}).length}/{room.maxPlayers}</td>
                   <td>
                     <button className="enter-button" onClick={() => handleEnterRoom(room.id)}>
                       입장
@@ -165,7 +165,7 @@ const RoomList = () => {
             </div>
             <div className="room-card-title">{room.title}</div>
             <div className="room-card-bottom">
-              <span>{Object.keys(room.player).length}/{room.maxPlayers} 명</span>
+              <span>{Object.keys(room.player || {}).length}/{room.maxPlayers} 명</span>
               <button className="enter-button" onClick={() => handleEnterRoom(room.id)}>
                 입장
               </button>
