@@ -13,8 +13,6 @@ export const cleanupGhostRooms = async () => {
     const roomData = roomDoc.data();
     const playerEntries = Object.entries(roomData.player || {});
 
-    if (playerEntries.length === 0) continue;
-
     const allGhosts = playerEntries.every(([_, player]: [string, any]) => {
       const lastActive = player?.lastActive?.toMillis?.();
       return !lastActive || lastActive < now - threeMinute;
