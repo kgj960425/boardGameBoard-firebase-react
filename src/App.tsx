@@ -17,7 +17,7 @@ import WaitingRoom from './pages/WaitingRoom';
 import useAuthCheck from "./hooks/useAuthCheck.tsx";
 import UserProfileEditor from "./pages/UserProfileEditor.tsx";
 import CommunityPage from "./pages/CommunityPage.tsx"
-import Test from './pages/test.tsx';
+import Test from './pages/tests/Test.tsx';
 
 function App() {
   //브라우저 css 모드 체크

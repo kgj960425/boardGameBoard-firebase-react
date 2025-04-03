@@ -97,7 +97,7 @@ const RoomList = () => {
 
   useEffect(() => {
     const load = async () => {
-      await cleanupGhostRooms(); // 🧹 유령방 정리 먼저
+      // await cleanupGhostRooms(); // 🧹 유령방 정리 먼저
       await fetchRooms();        // 📦 방 목록 가져오기
     };
     load();
