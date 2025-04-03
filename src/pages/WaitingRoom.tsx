@@ -4,7 +4,6 @@ import { deleteField, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase.tsx";
 import ChattingRoom from "../components/chattingRoom";
 import { useActivePing } from "../hooks/useActivePing"; // ✅ 올바른 import
-import "../styles/WaitingRoom.css"; // 스타일 파일이 있다면 (선택)
 
 const WaitingRoom = () => {
   const { roomId } = useParams<{ roomId: string }>();
