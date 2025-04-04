@@ -17,6 +17,7 @@ import WaitingRoom from './pages/WaitingRoom';
 import useAuthCheck from "./hooks/useAuthCheck.tsx";
 import UserProfileEditor from "./pages/UserProfileEditor.tsx";
 import CommunityPage from "./pages/CommunityPage.tsx"
+import ExplodingKittens from './games/ExplodingKittens.tsx';
 import Test from './pages/tests/Test.tsx';
 import Test2 from './pages/tests/Test2.tsx';
 
@@ -50,7 +51,7 @@ function App() {
 
           {/* 게임 플레이 룸 */}
           <Route element={<PlayRoomLayout />}>
-            <Route path="/room/:roomId/play" element={<div>게임 플레이 화면</div>} />
+            <Route path="/room/:roomId/play" element={<ExplodingKittens />} />
           </Route>
 
           {/* 없는 페이지 리다이렉트 */}
