@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { deleteField, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { deleteField, doc, onSnapshot, updateDoc, Timestamp } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase";
 import { ChatMessage } from "../hooks/useRoomMessages";
 import useRoomMessages from "../hooks/useRoomMessages";
@@ -28,18 +28,18 @@ export default function WaitingRoom() {
   const { addBot } = useAddBot(roomId, players.length);
 
   useEffect(() => {
-      if (!roomId) {
-        navigate("/");
-        return;
-      }
-  
-      const ref = doc(db, "A.rooms", roomId);
-      const unsubscribe = onSnapshot(ref, (docSnap) => {
-        if (docSnap.exists()) setRoomInfo(docSnap.data());
-      });
-  
-      return () => unsubscribe();
-    }, [roomId]);
+    if (!roomId) {
+      navigate("/");
+      return;
+    }
+
+    const ref = doc(db, "A.rooms", roomId);
+    const unsubscribe = onSnapshot(ref, (docSnap) => {
+      if (docSnap.exists()) setRoomInfo(docSnap.data());
+    });
+
+    return () => unsubscribe();
+  }, [roomId]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,7 +66,8 @@ export default function WaitingRoom() {
   const isHost = currentUserUid === hostUid;
   const readyPlayers = players.filter((p) => p.state === "ready");
   const currentUser = players.find((p) => p.uid === currentUserUid);
-  const canStartGame = isHost && players.length >= parseInt(roomInfo?.gameSetting?.min ?? "2") && readyPlayers.length === players.length - 1;
+  const minPlayers = parseInt(roomInfo?.gameSetting?.min ?? "2");
+  const canStartGame = isHost && players.length >= minPlayers && readyPlayers.length === players.length;
 
   const toggleReady = async () => {
     if (!roomId || !currentUserUid) return;
@@ -96,9 +97,44 @@ export default function WaitingRoom() {
     if (!roomId || !currentUserUid) return;
     try {
       setLeaving(true);
-      await updateDoc(doc(db, "A.rooms", roomId), {
-        [`player.${currentUserUid}`]: deleteField(),
-      });
+
+      const roomRef = doc(db, "A.rooms", roomId);
+      const updatedPlayerList = { ...roomInfo.player };
+      delete updatedPlayerList[currentUserUid];
+
+      if (isHost) {
+        const nonBotEntries = Object.entries(updatedPlayerList).filter(
+          ([_, info]) => {
+            const player = info as { nickname?: string; joinedAt?: Timestamp };
+            return !player.nickname?.startsWith("봇");
+          }
+        );
+
+        if (nonBotEntries.length === 0) {
+          await updateDoc(roomRef, {
+            [`player.${currentUserUid}`]: deleteField(),
+            state: "finished",
+          });
+        } else {
+          const sorted = nonBotEntries.sort((a, b) => {
+            const playerA = a[1] as { joinedAt?: Timestamp };
+            const playerB = b[1] as { joinedAt?: Timestamp };
+            const aTime = playerA.joinedAt?.seconds ?? 0;
+            const bTime = playerB.joinedAt?.seconds ?? 0;
+            return aTime - bTime;
+          });
+          const newHostUid = sorted[0][0];
+          await updateDoc(roomRef, {
+            [`player.${currentUserUid}`]: deleteField(),
+            host: newHostUid,
+          });
+        }
+      } else {
+        await updateDoc(roomRef, {
+          [`player.${currentUserUid}`]: deleteField(),
+        });
+      }
+
       navigate("/");
     } catch (error) {
       console.error("방 나가기 실패:", error);

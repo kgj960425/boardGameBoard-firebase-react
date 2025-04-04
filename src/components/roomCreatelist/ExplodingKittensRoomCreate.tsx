@@ -44,17 +44,27 @@ const ExplodingKittensRoomCreate: React.FC = () => {
       const roomData = {
         title,
         game: "Exploding Kittens",
-        maxPlayers,
-        turnTimeLimit,
         state: "waiting",
         createdAt: serverTimestamp(),
+        host: user,
         player: {
-            [user]: { nickname: nick }
+          [user]: {
+            nickname: nick,
+            photoURL: auth.currentUser?.photoURL ?? "",
+            state: "ready",
+            lastActive: serverTimestamp(),
+            joinedAt: serverTimestamp(),
+          },
         },
         messages: `m.${roomId}`,
         games: `r.${roomId}`,
         passwordYn: false,
         password: "",
+        gameSetting: {
+          max: maxPlayers,
+          min: 2, // 필요시 따로 조정 가능
+          timeLimit: turnTimeLimit,
+        },
       };
 
       await setDoc(doc(db, "A.rooms", roomId), roomData);
