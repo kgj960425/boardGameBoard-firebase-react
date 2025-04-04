@@ -10,7 +10,7 @@ import {
   orderBy,
   limit
 } from "firebase/firestore";
-import { db, auth } from "../firebase/firebase.tsx";
+import { db, auth } from "../firebase/firebase";
 import "./ChattingRoom.css";
 import { Rnd } from "react-rnd";
 
@@ -33,9 +33,8 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
   const [isOpen, setIsOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const isMobile = window.innerWidth <= 1080;
+  const isMobile = window.innerWidth <= 768;
 
-  // 메시지 컬렉션 경로 가져오기
   useEffect(() => {
     const fetchMessageCollectionId = async () => {
       const roomDoc = await getDoc(doc(db, "A.rooms", roomId));
@@ -45,115 +44,108 @@ const ChattingRoom = ({ roomId }: ChatBoxProps) => {
     fetchMessageCollectionId();
   }, [roomId]);
 
-  // 메시지 구독 (최신 → 오래된 순으로 정렬 후 reverse)
   useEffect(() => {
     if (!messageCollectionId) return;
-  
-    const messageQuery = query(
+    const q = query(
       collection(db, messageCollectionId),
       orderBy("createTime", "desc"),
-      limit(100)
+      limit(50)
     );
-  
-    const unsubscribe = onSnapshot(messageQuery, (snapshot) => {
-      const msgs = snapshot.docs.map(doc => ({
-        uid: doc.data().uid,
-        nickname: doc.data().nickname || "bot",
-        type: doc.data().type || "message",
-        content: doc.data().content,
-        createTime: doc.data().createTime?.toDate?.() || new Date(),
-      }));
-  
-      setMessages(msgs.reverse());
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const newMessages: ChatMessage[] = snapshot.docs.map((doc) => doc.data() as ChatMessage);
+      setMessages(newMessages.reverse());
     });
-  
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+
+    return () => unsub();
   }, [messageCollectionId]);
 
-  // 내가 보낸 메시지일 경우 스크롤 맨 아래로 이동
   useEffect(() => {
-    if (messages.length === 0) return;
-    const lastMessage = messages[messages.length - 1];
-    const isMine = lastMessage.uid === auth.currentUser?.uid;
-    if (isMine) {
-      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 메시지 전송
   const sendMessage = async () => {
-    if (!input.trim() || !messageCollectionId) return;
+    if (!messageCollectionId || !input.trim()) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-    try {
-      await addDoc(collection(db, messageCollectionId), {
-        uid: auth.currentUser?.uid,
-        nickname: auth.currentUser?.displayName || "이름없는놈",
-        type: "message",
-        content: input,
-        createTime: serverTimestamp(),
-      });
-      setInput("");
-    } catch (error) {
-      console.error("메시지 전송 오류:", error);
-    }
+    await addDoc(collection(db, messageCollectionId), {
+      uid: user.uid,
+      nickname: user.displayName || "익명",
+      type: "message",
+      content: input.trim(),
+      createTime: serverTimestamp(),
+    });
+    setInput("");
   };
+
+  const chattingContent = (
+    <div className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`}>
+      <div className="chatting-room-toggle">
+        <button onClick={() => setIsOpen(!isOpen)}>{isOpen ? "-" : "+"}</button>
+      </div>
+      {isOpen && (
+        <>
+          <div className="chatting-room-messages">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`chatting-room-message ${msg.uid === auth.currentUser?.uid ? "mine" : "other"}`}
+              >
+                <div className="chatting-room-nickname">{msg.nickname}</div>
+                <div className={`chatting-room-bubble ${msg.uid === auth.currentUser?.uid ? "mine" : "other"}`}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            <div ref={scrollRef}></div>
+          </div>
+          <div className="chatting-room-input">
+            <input
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="메시지를 입력하세요"
+            />
+            <button onClick={sendMessage}>전송</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          position: "fixed",
+          bottom: "10px",
+          right: "5%",
+          width: "90%",
+          height: "60%",
+          zIndex: 9999,
+        }}
+      >
+        {chattingContent}
+      </div>
+    );
+  }
 
   return (
     <Rnd
       default={{
-        x: isMobile ? window.innerWidth * 0.45 : window.innerWidth - 420,
-        y: isMobile ? window.innerHeight * 0.6 : window.innerHeight - 450,
-        width: isMobile ? window.innerWidth * 0.5 : 360,
-        height: isMobile ? window.innerHeight * 0.5 : 400,
+        x: window.innerWidth * 0.55,
+        y: window.innerHeight * 0.5,
+        width: window.innerWidth * 0.4,
+        height: window.innerHeight * 0.4,
       }}
+      bounds="window"
+      enableResizing={!isMobile}
+      dragHandleClassName="chatting-room-toggle"
+      className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`}
     >
-      <div
-        className={`chatting-room-wrapper ${isOpen ? "open" : "closed"}`}
-        onDoubleClick={() => setIsOpen(!isOpen)}
-      >
-        {!isOpen ? (
-          <div className="chatting-room-icon">C</div>
-        ) : (
-          <>
-            <div className="chatting-room-messages">
-              {messages.map((msg, idx) => {
-                const isMine = msg.uid === auth.currentUser?.uid;
-                return (
-                  <div key={idx} className={`chatting-room-message ${isMine ? "mine" : "other"}`}>
-                    {!isMine && <div className="chatting-room-nickname">{msg.nickname}</div>}
-                    <div className={`chatting-room-bubble ${isMine ? "mine" : "other"}`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={scrollRef} />
-            </div>
-
-            <div className="chatting-room-input">
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    if (!isOpen) {
-                      setIsOpen(true);
-                      setTimeout(() => inputRef.current?.focus(), 100);
-                    } else {
-                      sendMessage();
-                    }
-                  }
-                }}
-                placeholder="메시지를 입력하세요."
-              />
-              <button onClick={sendMessage}>전송</button>
-            </div>
-          </>
-        )}
-      </div>
+      {chattingContent}
     </Rnd>
   );
 };

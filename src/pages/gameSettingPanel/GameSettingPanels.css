@@ -1,0 +1,14 @@
+.game-setting {
+    height: 85%;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    padding: 1em;
+    border: 2px solid gold; /* 🔥 dashed → solid */
+    color: white;
+  }
+  
+  .title {
+    font-size: 1.2em;
+    margin-bottom: 1em;
+  }
+  

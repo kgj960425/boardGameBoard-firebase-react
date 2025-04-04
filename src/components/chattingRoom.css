@@ -180,3 +180,11 @@
   justify-content: center;
   user-select: none;
 }
+
+.waiting-room-chat {
+  position: relative; /* 반드시 추가 */
+  width: 100%;
+  max-width: 720px;
+  min-height: 400px;
+  overflow: hidden;
+}

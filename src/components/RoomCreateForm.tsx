@@ -9,7 +9,7 @@ interface Props {
   onClose: () => void;
 }
 
-const RoomCreateForm = ({ currentUser, onClose }: Props) => {
+const RoomCreateForm = ({ onClose }: Props) => {
   const [selectedGame, setSelectedGame] = useState<string>("");
 
   return (

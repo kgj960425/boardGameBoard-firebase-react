@@ -1,21 +1,19 @@
-/* 전체 레이아웃 구조 */
 .waitingroom-layout {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-  overflow: hidden; /* 스크롤 금지 */
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #1c1b1f;
+  background-image: url('../assets/images/cazino_table.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
-/* 콘텐츠 영역 */
-.waitingroom-layout > main {
-  flex: 1;
-  overflow: hidden; /* 안쪽에서도 스크롤 차단 */
+.waitingroom-main {
+  width: 100%;
+  height: 100%;
+  padding: 2%;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  padding: 2%;
-  background-color: rgba(0, 0, 0, 0.6);
-  border-radius: 2%;
-  box-shadow: 0 0 1vw rgba(0, 0, 0, 0.6);
+  align-items: center;
 }

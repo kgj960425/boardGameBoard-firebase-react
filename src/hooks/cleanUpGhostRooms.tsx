@@ -1,4 +1,3 @@
-// hooks/cleanupGhostRooms.ts
 import { getDocs, updateDoc, doc, collection, query, where } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
@@ -20,7 +19,6 @@ export const cleanupGhostRooms = async () => {
 
     if (allGhosts) {
       const roomRef = doc(db, "A.rooms", roomDoc.id);
-      console.log(`[유령 방] ${roomDoc.id} → 상태 변경: finished`);
       await updateDoc(roomRef, {
         state: "finished"
       });

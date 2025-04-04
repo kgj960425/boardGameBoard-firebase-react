@@ -1,0 +1,275 @@
+.waiting-room {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  gap: 2%;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.left-panel {
+  width: 65%;
+  display: flex;
+  flex-direction: column;
+  gap: 2%;
+}
+
+.right-panel {
+  width: 33%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.player-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 1em;
+  padding: 1em;
+  height: 65%;
+  background-color: rgba(20, 20, 20, 0.6);
+  border: 2px solid #8b0000;
+  border-radius: 12px;
+}
+
+.player-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2%;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5%;
+  border-radius: 1em;
+  border: 0.15em solid #444;
+  height: 25vh;
+}
+
+.player-photo {
+  width: 23vh;
+  height: 23vh;
+  border-radius: 50%;
+  background-color: #333;
+  border: 0.4vh solid goldenrod;
+  flex-shrink: 0;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.player-name {
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.player-status.ready {
+  color: lightgreen;
+  font-size: 2em;
+}
+
+.player-status.not-ready {
+  color: tomato;
+  font-size: 2em;
+}
+
+.player-status.host {
+  color: gold;
+  font-weight: bold;
+  font-size: 2em;
+  text-transform: uppercase;
+}
+
+.chat-box {
+  height: 35%;
+  background-color: rgba(10, 10, 10, 0.7);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 2px solid #444;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1em;
+  overflow-y: auto;
+  font-size: 0.9em;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chat-messages::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.chat-message.mine {
+  align-items: flex-end;
+}
+
+.chat-message.other {
+  align-items: flex-start;
+}
+
+.chat-nickname {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
+.chat-bubble {
+  padding: 0.6em 1em;
+  border-radius: 1em;
+  max-width: 75%;
+  word-break: break-word;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.chat-bubble.mine {
+  background-color: #fff3b0;
+  color: #000;
+  border-top-right-radius: 0.2em;
+}
+
+.chat-bubble.other {
+  background-color: #e0e0e0;
+  color: #000;
+  border-top-left-radius: 0.2em;
+}
+
+.chat-input {
+  display: flex;
+  border-top: 1px solid #333;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 0.8em;
+  background: transparent;
+  border: none;
+  color: white;
+}
+
+.chat-input button {
+  padding: 0.8em 1em;
+  background-color: goldenrod;
+  color: black;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.game-setting {
+  height: 85%;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  padding: 1em;
+  border: 2px dashed goldenrod;
+}
+
+.start-button {
+  height: 12%;
+  background-color: #8b0000;
+  color: white;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 2px solid white;
+}
+
+.button-group {
+  display: flex;
+  gap: 1em;
+  height: 12%;
+}
+
+.leave-button,
+.start-button,
+.ready-button {
+  flex: 1;
+  height: 100%;
+  font-size: 1.2em;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 2px solid white;
+}
+
+.leave-button {
+  background-color: #444;
+  color: white;
+  border-color: #aaa;
+}
+
+.leave-button:hover {
+  background-color: #666;
+}
+
+.start-button.active {
+  background-color: green;
+  color: white;
+}
+
+.start-button.disabled {
+  background-color: #555;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.ready-button.active {
+  background-color: goldenrod;
+  color: black;
+}
+
+.ready-button.cancel {
+  background-color: #999;
+  color: white;
+}
+
+.kick-button {
+  margin-top: 0.5em;
+  padding: 0.3em 0.6em;
+  font-size: 0.9em;
+  color: white;
+  background-color: darkred;
+  border: 1px solid white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.kick-button:hover {
+  background-color: crimson;
+}
+
+.profile-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
+.add-bot-button {
+  margin-top: 10px;
+  padding: 8px 14px;
+  font-size: 15px;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.add-bot-button:hover {
+  background-color: #666;
+}

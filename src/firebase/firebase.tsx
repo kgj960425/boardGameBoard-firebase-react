@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import {getAuth, setPersistence, browserLocalPersistence} from "firebase/auth";
+// import rtdb from "firebase/database"; // Realtime Database를 사용하기 위한 import
 
 //React앱의 경우 아래와 같이 getFirestore 메서드를 활용해 Cloud Firestore를 연동 가능하다.
 

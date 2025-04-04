@@ -18,6 +18,7 @@ import useAuthCheck from "./hooks/useAuthCheck.tsx";
 import UserProfileEditor from "./pages/UserProfileEditor.tsx";
 import CommunityPage from "./pages/CommunityPage.tsx"
 import Test from './pages/tests/Test.tsx';
+import Test2 from './pages/tests/Test2.tsx';
 
 function App() {
   //브라우저 css 모드 체크
@@ -39,6 +40,7 @@ function App() {
             <Route path="/UserProfileEditor" element={<UserProfileEditor />} />
             <Route path="/CommunityPage" element={<CommunityPage />} />
             <Route path="/test" element={<Test />} />
+            <Route path="/test2" element={<Test2 />} />
           </Route>
 
           {/* 대기방 */}
