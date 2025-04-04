@@ -25,7 +25,7 @@ export default function WaitingRoom() {
   const currentUserUid = auth.currentUser?.uid;
 
   const players = Object.entries(roomInfo?.player || {}).map(([uid, data]: any) => ({ uid, ...data }));
-  const { addBot, nextBotNumber } = useAddBot(roomId, players.length);
+  const { addBot } = useAddBot(roomId, players.length);
 
   useEffect(() => {
       if (!roomId) {
