@@ -1,20 +1,34 @@
 import React, { useEffect, useRef, useState } from 'react';
-import './Test.css';
 import { db } from '../firebase/firebase';
-import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import './ExplodingKittens.css';
+import ExplodingKittensUtil from "../games/ExplodingKittensUtil";
+const {
+  initializeGame, // 방 ID 전달
+  generateFullDeck,
+  shuffle,
+  // insertCard, // Removed as it does not exist in ExplodingKittensUtil
+  // peekTopCards // Removed as it does not exist in ExplodingKittensUtil
+} = ExplodingKittensUtil();
+
+const fullDeck = generateFullDeck();
+const shuffledDeck = shuffle(fullDeck);
+// const top3 = peekTopCards(shuffledDeck); // Removed as peekTopCards is not defined
+// const newDeck = insertCard(shuffledDeck, "Exploding Kitten", 2); // Removed as insertCard is not defined
 
 const players = [
   { uid: 'me', nickname: '나', isMe: true },
   { uid: 'p1', nickname: '플레이어1', isMe: false },
   { uid: 'p2', nickname: '플레이어2', isMe: false },
   { uid: 'p3', nickname: '플레이어3', isMe: false },
+  { uid: 'p4', nickname: '플레이어4', isMe: false },
 ];
 
 const ExplodingKittens: React.FC = () => {
   const tableRef = useRef<HTMLDivElement>(null);
-  const [deck, setDeck] = useState<string[]>([]);
+  // const [deck, setDeck] = useState<string[]>([]);
   const [hand, setHand] = useState<string[]>([]);
-  const [currentTurn, setCurrentTurn] = useState(0);
+  // const [currentTurn, setCurrentTurn] = useState(0);
 
   const gameId = 'sample-game'; // 테스트용 ID
 
@@ -48,6 +62,8 @@ const ExplodingKittens: React.FC = () => {
         el.style.position = 'absolute';
       }
     });
+
+    initializeGame("20"); // 방 ID 전달
   }, []);
 
   useEffect(() => {
@@ -78,7 +94,6 @@ const ExplodingKittens: React.FC = () => {
     const gameData = gameSnap.data();
     const newDeck = [...gameData.deck];
     const card = newDeck.pop();
-    alert(`당신은 ${card} 카드를 뽑았습니다.`);
     await updateDoc(gameRef, {
       deck: newDeck,
       hands: {
@@ -105,7 +120,7 @@ const ExplodingKittens: React.FC = () => {
         </div>
       ))}
 
-      <div style={{ position: 'absolute', left: 20, top: 20, color: 'white' }}>
+      <div style={{ position: 'absolute', left: 20, top: 20, color: 'black',backgroundColor: 'white', padding: '10px', borderRadius: '5px' }}>
         <h4>내 손패:</h4>
         <ul>
           {hand.map((card, idx) => <li key={idx}>{card}</li>)}

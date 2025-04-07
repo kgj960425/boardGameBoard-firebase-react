@@ -8,8 +8,8 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: #2b2b2b;
-  background-image: url('./assets/images/cazino_table.jpg');
+  background-color: white;
+  /* background-image: url('./assets/images/cazino_table.jpg'); playing room에서는 적용하기 싫은 코드*/
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -21,7 +21,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2%;
+  /* padding: 2%; playing room에서는 적용하기 싫은 코드 */
 }
 
 main {
@@ -47,11 +47,11 @@ main {
 
 @media (max-width: 1080px) {
   #root {
-    padding: 4%;
+    /* padding: 4%; */
   }
 
   main {
-    padding: 4%;
+    /* padding: 4%; */
   }
 }
 

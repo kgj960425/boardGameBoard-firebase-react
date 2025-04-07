@@ -1,0 +1,13 @@
+.PlayRoom-layout {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #game-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: white; /* 뒷배경 확실히 덮기 */
+    
+  }
