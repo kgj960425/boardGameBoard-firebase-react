@@ -1,34 +1,112 @@
-.table-container {
-    position: relative;
-    width: 800px;
-    height: 500px;
-    margin: 50px auto;
-    border-radius: 50%;
-    background: radial-gradient(circle at center, #111, #000);
-    border: 5px solid limegreen;
-  }
-  
-  .card-slot-area {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-  }
-  
-  .player-slot {
-    position: absolute;
-    background: #222;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-size: 14px;
-    white-space: nowrap;
-    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-  }
-  
-  .player-slot.me {
-    background: gold;
-    color: black;
-    font-weight: bold;
-  }
-  
+.ek-board {
+  display: grid;
+  grid-template-areas:
+    "p1 p2"
+    "p3 p4"
+    ". center"
+    ". hand";
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(4, auto);
+  gap: 10px;
+  padding: 20px;
+}
+
+.players-grid {
+  display: contents;
+}
+
+.player-info {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.player-circle {
+  width: 100px;
+  height: 100px;
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  text-align: center;
+  padding-top: 20px;
+}
+
+.player-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.turn-order {
+  background-color: #3b82f6;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 50%;
+}
+
+.current-player-mark {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 20px;
+  color: gold;
+}
+
+.game-center {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.danger-bar {
+  background-color: red;
+  color: white;
+  padding: 5px 20px;
+  margin-bottom: 10px;
+}
+
+.deck-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.deck-btn {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px;
+  border: none;
+  width: 80px;
+}
+
+.my-hand {
+  grid-area: hand;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.submit-btn {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px;
+  width: 80px;
+}
+
+.my-cards {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  background-color: #3b82f6;
+  color: white;
+  padding: 20px 10px;
+  width: 60px;
+  text-align: center;
+}

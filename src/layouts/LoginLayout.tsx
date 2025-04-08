@@ -1,16 +1,17 @@
 import { Outlet } from 'react-router-dom';
+import loginLayoutImage from '../assets/images/loginLayout.png'; // 이미지 경로를 수정하세요
 
 export default function LoginLayout() {
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
+        width: '100dvw',
+        height: '100dvh',
         overflow: 'hidden',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundImage: `url('/assets/images/cazino_table.jpg')`,
+        backgroundImage: `url(${loginLayoutImage})`, /* playing room에서는 적용하기 싫은 코드*/
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundAttachment: 'fixed',
@@ -18,7 +19,6 @@ export default function LoginLayout() {
     >
       <main
         style={{
-          width: '100%',
           maxWidth: '500px',
           padding: '40px',
           backgroundColor: 'rgba(0, 0, 0, 0.7)',

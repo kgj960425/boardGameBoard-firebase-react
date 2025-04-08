@@ -1,4 +1,4 @@
-.table-container {
+/* .table-container {
     position: relative;
     width: 720px;
     height: 360px;
@@ -11,7 +11,6 @@
             0 0 20px rgba(0, 255, 100, 0.1);
 }
 
-/* 중앙 카드 슬롯 */
 .card-slot-area {
     position: absolute;
     top: 50%;
@@ -30,7 +29,6 @@
     box-shadow: 0 0 4px rgba(255, 235, 59, 0.3);
 }
 
-/* 플레이어 슬롯 */
 .player-slot {
     width: 80px;
     height: 100px;
@@ -49,7 +47,6 @@
     font-weight: bold;
 }
 
-/* TEXAS HOLD'EM 텍스트 */
 .table-container::after {
     content: "TEXAS HOLD'EM";
     position: absolute;
@@ -60,4 +57,4 @@
     font-weight: bold;
     font-size: 18px;
     letter-spacing: 2px;
-}
+} */

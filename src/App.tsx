@@ -5,13 +5,13 @@ import Loading from './pages/Loading';
 import { useResponsiveLogger } from "./utils/useResponsiveLogger";
 
 // Layouts
-// import LoginLayout from '../src/layouts/LoginLayout';
+import LoginLayout from '../src/layouts/LoginLayout';
 import LobbyLayout from '../src/layouts/LobbyLayout';
 import WaitingRoomLayout from '../src/layouts/WaitingRoomLayout';
 import PlayRoomLayout from '../src/layouts/PlayRoomLayout';
 
 // Pages
-// import Login from './pages/Login';
+import Login from './pages/Login';
 import RoomList from './pages/RoomList';
 import WaitingRoom from './pages/WaitingRoom';
 import useAuthCheck from "./hooks/useAuthCheck.tsx";
@@ -30,14 +30,10 @@ function App() {
   return (
       <Suspense fallback={<Loading />}>
         <Routes>
-          {/* 로그인 레이아웃 */}
-          <Route element={<PlayRoomLayout />}>
-            <Route path="/login" element={<ExplodingKittens />} />
-          </Route>
-          {/* <Route element={<LoginLayout />}> 
+          <Route element={<LoginLayout />}> 
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-          </Route> */}
+            {/* <Route path="/signup" element={<Signup />} /> */}
+          </Route>
 
           {/* 로비/기본 레이아웃 */}
           <Route element={<LobbyLayout />}>
@@ -46,6 +42,7 @@ function App() {
             <Route path="/CommunityPage" element={<CommunityPage />} />
             <Route path="/test" element={<Test />} />
             <Route path="/test2" element={<Test2 />} />
+            <Route path="/test3" element={<Test3 />} />
           </Route>
 
           {/* 대기방 */}

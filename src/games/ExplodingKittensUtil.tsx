@@ -33,7 +33,15 @@ const ExplodingKittensUtil = () => {
     if (!roomSnap.exists()) return;
 
     const roomData = roomSnap.data();
-    const gameId: string = roomData?.gameSetting?.games ?? `r.${roomId}`; // 예: "r.20"
+    const gameId: string = roomData?.gameSetting?.games ?? `r.${roomId}`;
+
+    const alreadyInitializedRef = doc(db, gameId, "0");
+    const alreadyInitializedSnap = await getDoc(alreadyInitializedRef);
+
+    if (alreadyInitializedSnap.exists()) {
+      return; // 이미 초기화됨 아무 것도 하지 않음
+    }
+
     const players = Object.keys(roomData.player);
     const playerCount = players.length;
 
@@ -75,7 +83,6 @@ const ExplodingKittensUtil = () => {
     const currentPlayer = turnOrder[0];
     const nextPlayer = turnOrder[1] ?? null;
 
-    // ✅ 루트 컬렉션에 gameId 컬렉션 생성 (예: r.20), 문서 ID는 "0"
     const gameDocRef = doc(db, gameId, "0");
     await setDoc(gameDocRef, {
       turn: 0,
@@ -90,13 +97,57 @@ const ExplodingKittensUtil = () => {
       playedCard: null
     });
 
-    console.log(`✅ 초기화 완료: ${gameId}/0`);
+    console.log(`초기화 완료: ${gameId}`);
+  }
+
+  async function saveNextTurn({
+    roomId,
+    turn,
+    currentPlayer,
+    nextPlayer,
+    playerCards,
+    deck,
+    discardPile,
+    discard,
+    playedCard,
+    lastPlayedCard,
+  }: {
+    roomId: string;
+    turn: number;
+    currentPlayer: string;
+    nextPlayer: string;
+    playerCards: Record<string, Record<string, string>>;
+    deck: string[];
+    discardPile: string[];
+    discard: string[];
+    playedCard: string | null;
+    lastPlayedCard: string | null;
+  }) {
+    const gameId = `r.${roomId}`;
+    const turnRef = doc(db, gameId, `${turn}`);
+
+    await setDoc(turnRef, {
+      turn,
+      currentPlayer,
+      nextPlayer,
+      turnStart: new Date(),
+      turnEnd: null,
+      playerCards,
+      deck,
+      discardPile,
+      discard,
+      playedCard,
+      lastPlayedCard,
+    });
+
+    console.log(`[턴 ${turn}] 저장 완료`);
   }
 
   return {
     generateFullDeck,
     shuffle,
-    initializeGame
+    initializeGame,
+    saveNextTurn
   };
 };
 

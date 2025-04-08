@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { deleteField, doc, onSnapshot, updateDoc, Timestamp } from "firebase/firestore";
+import { deleteField, doc, onSnapshot, updateDoc, Timestamp, setDoc } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase";
 import { ChatMessage } from "../hooks/useRoomMessages";
 import useRoomMessages from "../hooks/useRoomMessages";
@@ -46,6 +46,18 @@ export default function WaitingRoom() {
   }, [messages]);
 
   useEffect(() => {
+    if (roomInfo?.state === "playing") {
+      if(!currentUserUid) return;
+      const isInRoom = !!roomInfo.player?.[currentUserUid];
+      if (isInRoom && currentUserUid) {
+        navigate(`/room/${roomId}/play`);
+      } else {
+        navigate("/");
+      }
+    }
+  }, [roomInfo?.state, roomInfo?.player, currentUserUid, roomId, navigate]);
+
+  useEffect(() => {
     if (!roomInfo || !currentUserUid) return;
 
     const isInRoom = !!roomInfo.player?.[currentUserUid];
@@ -79,6 +91,18 @@ export default function WaitingRoom() {
       });
     } catch (e) {
       console.error("준비 상태 변경 실패:", e);
+    }
+  };
+
+  const handleStartGame = async () => {
+    if (!roomId) return;
+  
+    try {
+      const roomRef = doc(db, "A.rooms", roomId);
+      await updateDoc(roomRef, { state: "playing" });
+      navigate(`/room/${roomId}/play`);
+    } catch (error) {
+      console.error("게임 시작 실패:", error);
     }
   };
 
@@ -206,6 +230,7 @@ export default function WaitingRoom() {
               <button
                 className={`start-button ${canStartGame ? "active" : "disabled"}`}
                 disabled={!canStartGame}
+                onClick={handleStartGame}
               >
                 {canStartGame ? "게임 시작" : "준비중..."}
               </button>
