@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "../firebase/firebase";
-import { getDocs, query, where, collection, doc, runTransaction } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  runTransaction,
+  where,
+} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import "./RoomList.css";
 import Modal from "../components/Modal";
 import RoomCreateForm from "../components/RoomCreateForm";
-import { cleanupGhostRooms } from "../hooks/cleanUpGhostRooms"; // 경로 확인!
+import { cleanupGhostRooms } from "../hooks/cleanUpGhostRooms";
 
 interface Room {
   id: string;
   title: string;
   state: string;
-  player: Record<string, any>; // nickname, lastActive 등 포함
+  player: Record<string, any>;
   passwordYn: string;
   password: string;
   messages: string;
@@ -24,87 +31,84 @@ const RoomList = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const navigate = useNavigate();
 
-  const fetchRooms = async () => {
-    try {
-      const q = query(collection(db, "A.rooms"), where("state", "==", "waiting"));
-      const snapshot = await getDocs(q);
-      const list: Room[] = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          title: data.title,
-          state: data.state,
-          player: data.player || {},
-          passwordYn: data.passwordYn,
-          password: data.password,
-          messages: data.messages,
-          maxPlayers: data.maxPlayers,
-          game: data.game,
-        };
-      });
-      setRooms(list);
-    } catch (err) {
-      console.error("방 목록 조회 실패", err);
-    }
-  };
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      query(collection(db, "A.rooms"), where("state", "==", "waiting")),
+      (snapshot) => {
+        const list: Room[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            state: data.state,
+            player: data.player || {},
+            passwordYn: data.passwordYn,
+            password: data.password,
+            messages: data.messages,
+            maxPlayers: data.maxPlayers,
+            game: data.game,
+          };
+        });
+        setRooms(list);
+      },
+      (err) => {
+        console.error("방 목록 실시간 조회 실패", err);
+      }
+    );
+
+    cleanupGhostRooms();
+
+    return () => unsubscribe();
+  }, []);
 
   const handleEnterRoom = async (roomId: string) => {
     const user = auth.currentUser;
     const uid = user?.uid;
     const nickname = user?.displayName || "익명";
-    const photoURL = user?.photoURL || "/default-profile.png"; // ✅ 추가
-  
+    const photoURL = user?.photoURL || "/default-profile.png";
+
     if (!uid) {
       alert("로그인이 필요합니다.");
       return;
     }
-  
+
     const roomRef = doc(db, "A.rooms", roomId);
-  
+
     try {
       await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomRef);
         if (!roomSnap.exists()) {
           throw new Error("방이 존재하지 않습니다.");
         }
-  
+
         const roomData = roomSnap.data();
-  
+
         if (roomData.state !== "waiting") {
           throw new Error("게임이 시작되었거나 종료된 방입니다.");
         }
-  
+
         const currentPlayers = Object.keys(roomData.player || {});
         if (currentPlayers.includes(uid)) return;
         if (currentPlayers.length >= roomData.maxPlayers) {
           throw new Error("방 정원이 가득 찼습니다.");
         }
-  
+
         transaction.update(roomRef, {
           [`player.${uid}`]: {
             nickname,
-            photoURL, // ✅ 여기에 저장
+            photoURL,
             joinedAt: new Date(),
             lastActive: new Date(),
           },
         });
       });
-  
+
       navigate(`/room/${roomId}/wait`);
     } catch (err: any) {
       console.error("입장 중 오류", err);
       alert(err.message || "방 입장 중 오류가 발생했습니다.");
     }
   };
-  
-
-  useEffect(() => {
-    const load = async () => {
-      await cleanupGhostRooms(); // 🧹 유령방 정리 먼저
-      await fetchRooms();        // 📦 방 목록 가져오기
-    };
-    load();
-  }, []);
 
   return (
     <div className="room-list-container">
