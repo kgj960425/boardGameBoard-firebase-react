@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { deleteField, doc, onSnapshot, updateDoc, Timestamp, setDoc } from "firebase/firestore";
+import { deleteField, doc, onSnapshot, updateDoc, Timestamp } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase";
 import { ChatMessage } from "../hooks/useRoomMessages";
 import useRoomMessages from "../hooks/useRoomMessages";
@@ -32,7 +32,7 @@ export default function WaitingRoom() {
   //     const state = snap.val()?.state;
   //     console.log(`${otherUserId} is ${state}`);
   // });
-  
+
   useEffect(() => {
     if (!roomId) {
       navigate("/");

@@ -30,10 +30,12 @@ function App() {
 
   // ✅ Auth 확인은 Hook 밖에서 처리
   useEffect(() => {
+    
     const auth = getAuth();
     const unsub = onAuthStateChanged(auth, (user) => {
       setIsAuthenticated(!!user);
       setChecking(false);
+      console.log(isAuthenticated);
     });
     return () => unsub();
   }, []);

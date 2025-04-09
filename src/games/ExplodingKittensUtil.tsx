@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
 const ExplodingKittensUtil = () => {
