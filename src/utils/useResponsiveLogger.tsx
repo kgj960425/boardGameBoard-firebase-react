@@ -24,10 +24,10 @@ export const useResponsiveLogger = () => {
         const height = window.innerHeight;
         const type = getDeviceType(width);
 
-        console.log(`✅ 화면 크기 변경됨`);
-        console.log(`➡️ width: ${width}px`);
-        console.log(`➡️ height: ${height}px`);
-        console.log(`➡️ 인식된 디바이스 타입: ${type}`);
+        // console.log(`✅ 화면 크기 변경됨`);
+        // console.log(`➡️ width: ${width}px`);
+        // console.log(`➡️ height: ${height}px`);
+        // console.log(`➡️ 인식된 디바이스 타입: ${type}`);
       }, 2000);
     };
 

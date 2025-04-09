@@ -27,6 +27,12 @@ export default function WaitingRoom() {
   const players = Object.entries(roomInfo?.player || {}).map(([uid, data]: any) => ({ uid, ...data }));
   const { addBot } = useAddBot(roomId, players.length);
 
+  // const onlineRef = ref(db, '/status/' + otherUserId);
+  //   onValue(onlineRef, (snap) => {
+  //     const state = snap.val()?.state;
+  //     console.log(`${otherUserId} is ${state}`);
+  // });
+  
   useEffect(() => {
     if (!roomId) {
       navigate("/");

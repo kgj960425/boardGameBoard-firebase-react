@@ -1,26 +1,29 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { useLoginAction } from '../stores/LoginStore';
 import { useNavigate } from 'react-router-dom';
-
-const auth = getAuth();
+import { useLoginAction } from '../stores/LoginStore';
 
 const useAuthCheck = () => {
-    const { setIsLoginValid } = useLoginAction();
-    const navigate = useNavigate();
+  const { setIsLoginValid } = useLoginAction();
+  const navigate = useNavigate();
+  const [checked, setChecked] = useState(false); // ✅ 로그인 상태 확인 완료 여부
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setIsLoginValid(true);
-            } else {
-                setIsLoginValid(false);
-                navigate('/login');
-            }
-        });
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsLoginValid(true);
+      } else {
+        setIsLoginValid(false);
+        if (checked) {
+          navigate('/login');
+        }
+      }
+      setChecked(true);
+    });
 
-        return () => unsubscribe(); // 컴포넌트 언마운트 시 구독 해제
-    }, [setIsLoginValid, navigate]);
+    return () => unsubscribe();
+  }, [checked, navigate, setIsLoginValid]);
 };
 
 export default useAuthCheck;

@@ -110,3 +110,11 @@
   width: 60px;
   text-align: center;
 }
+
+.card.selected {
+  border: 3px solid #ffd700; /* 밝은 노란색 테두리 */
+  box-shadow: 0 0 12px #ffd700;
+  transform: scale(1.05);
+  transition: all 0.2s ease-in-out;
+  z-index: 1;
+}

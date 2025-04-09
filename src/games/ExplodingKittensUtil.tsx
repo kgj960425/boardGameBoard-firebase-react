@@ -1,24 +1,24 @@
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
 const ExplodingKittensUtil = () => {
-    function generateFullDeck(): string[] {
-        return [
-            ...Array(4).fill("Attack"),
-            ...Array(4).fill("Skip"),
-            ...Array(4).fill("Favor"),
-            ...Array(4).fill("Shuffle"),
-            ...Array(5).fill("See the Future"),
-            ...Array(5).fill("Nope"),
-            ...Array(4).fill("Taco Cat"),
-            ...Array(4).fill("Hairy Potato Cat"),
-            ...Array(4).fill("Rainbow Ralphing Cat"),
-            ...Array(4).fill("Cattermelon"),
-            ...Array(4).fill("Beard Cat"),
-            ...Array(6).fill("Defuse"),
-            ...Array(4).fill("Exploding Kitten"),
-        ];
-    }
+  function generateFullDeck(): string[] {
+    return [
+      ...Array(4).fill("Attack"),
+      ...Array(4).fill("Skip"),
+      ...Array(4).fill("Favor"),
+      ...Array(4).fill("Shuffle"),
+      ...Array(5).fill("See the Future"),
+      ...Array(5).fill("Nope"),
+      ...Array(4).fill("Taco Cat"),
+      ...Array(4).fill("Hairy Potato Cat"),
+      ...Array(4).fill("Rainbow Ralphing Cat"),
+      ...Array(4).fill("Cattermelon"),
+      ...Array(4).fill("Beard Cat"),
+      ...Array(6).fill("Defuse"),
+      ...Array(4).fill("Exploding Kitten"),
+    ];
+  }
 
   function shuffle<T>(array: T[]): T[] {
     return array
@@ -33,58 +33,68 @@ const ExplodingKittensUtil = () => {
     if (!roomSnap.exists()) return;
 
     const roomData = roomSnap.data();
-    const gameId: string = roomData?.gameSetting?.games ?? `r.${roomId}`;
+    const gameId: string = `r.${roomId}`;
 
     const alreadyInitializedRef = doc(db, gameId, "0");
     const alreadyInitializedSnap = await getDoc(alreadyInitializedRef);
-
     if (alreadyInitializedSnap.exists()) {
-      return; // 이미 초기화됨 아무 것도 하지 않음
+      console.log("이미 게임이 초기화되어 있음");
+      return;
     }
 
-    const players = Object.keys(roomData.player);
+    const players: string[] = Object.keys(roomData.player);
     const playerCount = players.length;
 
+    // 전체 카드 생성 및 셔플
     let deck = shuffle(generateFullDeck());
 
+    // 플레이어별 핸드 생성
     const playerCards: Record<string, Record<string, string>> = {};
     for (const uid of players) {
       const hand: string[] = [];
 
-      while (hand.length < 4) {
+      // 디퓨즈, 폭탄 제외하고 7장 뽑기
+      while (hand.length < 7) {
         const card = deck.shift();
         if (card && card !== "Defuse" && card !== "Exploding Kitten") {
           hand.push(card);
         } else {
-          deck.push(card!);
+          deck.push(card!); // 다시 넣기
         }
       }
 
+      // 디퓨즈 1장 강제로 넣기
       const defuseIdx = deck.findIndex(c => c === "Defuse");
       if (defuseIdx !== -1) {
         hand.push(deck.splice(defuseIdx, 1)[0]);
       }
 
+      // 핸드 저장
       playerCards[uid] = {};
       hand.forEach((card, idx) => {
         playerCards[uid][(idx + 1).toString()] = card;
       });
     }
 
+    // 남은 디퓨즈 2장만 살림
     const remainingDefuses = deck.filter(c => c === "Defuse").slice(0, 2);
     deck = deck.filter(c => c !== "Defuse");
 
+    // 폭탄 카드는 (플레이어 수 - 1)개만 사용
     const kittens = deck.filter(c => c === "Exploding Kitten").slice(0, playerCount - 1);
     deck = deck.filter(c => c !== "Exploding Kitten");
 
+    // 최종 덱: 디퓨즈 + 폭탄 + 나머지
     const finalDeck = shuffle([...deck, ...remainingDefuses, ...kittens]);
 
+    // 턴 순서 랜덤 결정
     const turnOrder = shuffle(players);
     const currentPlayer = turnOrder[0];
     const nextPlayer = turnOrder[1] ?? null;
 
-    const gameDocRef = doc(db, gameId, "0");
-    await setDoc(gameDocRef, {
+    // 초기 게임 상태 저장
+    const firstTurnRef = doc(db, gameId, "0");
+    await setDoc(firstTurnRef, {
       turn: 0,
       currentPlayer,
       nextPlayer,
@@ -93,11 +103,15 @@ const ExplodingKittensUtil = () => {
       playerCards,
       deck: finalDeck,
       discardPile: [],
+      discard: [],
+      playedCard: null,
       lastPlayedCard: null,
-      playedCard: null
+      turnStack: 0,
+      remainingActions: 1, // 기본 액션 1회, 이후 공격 카드 사용 등으로 증가 가능
+      deadPlayers: [],
     });
 
-    console.log(`초기화 완료: ${gameId}`);
+    console.log(`[${roomId}] 게임 초기화 완료`);
   }
 
   async function saveNextTurn({
@@ -147,7 +161,7 @@ const ExplodingKittensUtil = () => {
     generateFullDeck,
     shuffle,
     initializeGame,
-    saveNextTurn
+    saveNextTurn,
   };
 };
 
