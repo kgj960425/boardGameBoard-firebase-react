@@ -28,7 +28,6 @@ interface GameData {
 const ExplodingKittens = () => {
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [input, setInput] = useState("");
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { roomId } = useParams<{ roomId: string }>();
@@ -36,6 +35,43 @@ const ExplodingKittens = () => {
   const playerInfo = usePlayerInfo(roomId);
   const sendMessage = useSendMessage(`m.${roomId}`);
   const messages: ChatMessage[] = useRoomMessages(`m.${roomId}`);
+
+  const powerlessCards = [
+    "Taco Cat",
+    "Hairy Potato Cat",
+    "Cattermelon",
+    "Beard Cat",
+    "Rainbow Ralphing Cat",
+  ];
+
+  const [selectedCard, setSelectedCard] = useState<string | null>(null);
+  const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
+  
+  const handleCardClick = (card: string) => {
+    if (!myUid || !gameData) return;
+  
+    const myHand = gameData.playerCards[myUid];
+    const sameCardEntries = Object.entries(myHand).filter(([_, v]) => v === card);
+  
+    // 선택 해제
+    if (selectedCard === card) {
+      setSelectedCard(null);
+      setSelectedCardKeys([]);
+      return;
+    }
+  
+    // 무능력 카드인 경우만 멀티 선택
+    if (powerlessCards.includes(card)) {
+      const keysToSelect = sameCardEntries.slice(0, 3).map(([key]) => key);
+      setSelectedCard(card);
+      setSelectedCardKeys(keysToSelect);
+    } else {
+      // 능력 카드일 경우 단일 선택만
+      const [firstKey] = sameCardEntries;
+      setSelectedCard(card);
+      setSelectedCardKeys([firstKey[0]]);
+    }
+  };
 
   useEffect(() => {
     if (roomId) initializeGame(roomId);
@@ -97,11 +133,11 @@ const ExplodingKittens = () => {
 
       {/* 내 카드 패 */}
       <div className="playroom-my-cards">
-        {myCards.map((card, idx) => (
+        {myUid && Object.entries(gameData.playerCards[myUid] || {}).map(([key, card]) => (
           <div
-            key={idx}
-            className={`playroom-card ${selectedCard === card ? "selected" : ""}`}
-            onClick={() => setSelectedCard(prev => (prev === card ? null : card))}
+            key={key}
+            className={`playroom-card ${selectedCardKeys.includes(key) ? "selected" : ""}`}
+            onClick={() => handleCardClick(card)}
           >
             {card}
           </div>
