@@ -22,31 +22,11 @@ import ExplodingKittens from './games/ExplodingKittens.tsx';
 import Test from './pages/tests/Test.tsx';
 import Test2 from './pages/tests/Test2.tsx';
 import Test3 from './pages/tests/Test3.tsx';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-
 function App() {
-  const [checking, setChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ✅ Auth 확인은 Hook 밖에서 처리
-  useEffect(() => {
-    
-    const auth = getAuth();
-    const unsub = onAuthStateChanged(auth, (user) => {
-      setIsAuthenticated(!!user);
-      setChecking(false);
-      console.log(isAuthenticated);
-    });
-    return () => unsub();
-  }, []);
-
-  // ✅ 훅은 항상 고정된 순서로 호출되어야 함
   useResponsiveLogger();
   useAuthCheck(); // 내부에서 navigate는 checking이 false일 때만 실행
   usePresenceManager(); // 내부에서 user가 있을 때만 작동
-
-  // ✅ 화면만 조건부 렌더링
-  if (checking) return <Loading />;
 
   return (
     <Suspense fallback={<Loading />}>
