@@ -69,7 +69,7 @@ const ExplodingKittens = () => {
     <div className="playroom-container">
       {/* 상단 플레이어들 */}
       <div className="playroom-player-bar">
-        {gameData.turnOrder.map((uid, idx) => {
+        {gameData.turnOrder.map((uid) => {
           const cardCount = Object.keys(gameData.playerCards?.[uid] ?? {}).length;
           return (
             <div key={uid} className="playroom-player-profile">

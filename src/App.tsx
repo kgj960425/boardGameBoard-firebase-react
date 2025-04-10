@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import './App.css';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Loading from './pages/Loading';
