@@ -1,10 +1,9 @@
 .PlayRoom-layout {
-    width: calc(var(--vw) * 100);
-    height: calc(var(--vh) * 100);
+    width: 100vw;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 넘치는 건 숨김 */
-    touch-action: none; /* 모바일에서 터치 제스처 막기 */
-    background-color: #2a4c34; /* 카지노 배경 바닥 어두운 녹색 테이블 느낌 */
+    overflow: hidden;
+    background-color: #2a4c34;
   }
   
