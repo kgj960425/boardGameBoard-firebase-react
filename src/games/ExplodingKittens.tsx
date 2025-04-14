@@ -1,11 +1,20 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, SetStateAction } from "react";
 import { useParams } from "react-router-dom";
 import { db, auth } from "../firebase/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import { initializeGame } from "./ExplodingKittensUtil";
+import {
+  initializeGame,
+  submitCard,
+  drawCard,
+  insertBombAt,
+  handleFavorSelectedCard,
+} from "./ExplodingKittensUtil";
 import useRoomMessages, { ChatMessage } from "../hooks/useRoomMessages";
 import useSendMessage from "../hooks/useSendMessage";
 import { usePlayerInfo } from "../hooks/usePlayerInfo";
+// Ensure the correct path to FavorModal is used
+import FavorModal from "../components/FavorModal"; // Update this path if the file is located elsewhere
+import InsertBombModal from "../components/InsertBombModal";
 import "./ExplodingKittens.css";
 
 interface GameData {
@@ -22,6 +31,8 @@ interface GameData {
   lastPlayedCard: string | null;
   turnOrder: string[];
   deadPlayers: string[];
+  turnStack: number; // Added property
+  remainingActions: number; // Added property
 }
 
 const ExplodingKittens = () => {
@@ -30,6 +41,12 @@ const ExplodingKittens = () => {
   const [input, setInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
+  const [favorModalOpen, setFavorModalOpen] = useState(false);
+  const [favorTarget, setFavorTarget] = useState<string | null>(null);
+  const [insertBombModalOpen, setInsertBombModalOpen] = useState(false);
+  const [bombDeck, setBombDeck] = useState<string[]>([]);
+  const [bombHand, setBombHand] = useState<Record<string, string>>({});
+
   const resizingRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +94,6 @@ const ExplodingKittens = () => {
 
   const handleCardClick = (card: string, cardKey: string) => {
     if (!myUid || !gameData) return;
-  
     const powerlessCards = [
       "Taco Cat",
       "Hairy Potato Cat",
@@ -85,26 +101,44 @@ const ExplodingKittens = () => {
       "Beard Cat",
       "Rainbow Ralphing Cat",
     ];
-  
     const myHand = gameData.playerCards[myUid];
     const sameCardEntries = Object.entries(myHand).filter(([_, v]) => v === card);
-  
     if (selectedCardKeys.includes(cardKey)) {
       setSelectedCard(null);
       setSelectedCardKeys([]);
       return;
     }
-  
     if (powerlessCards.includes(card)) {
       const keysToSelect = sameCardEntries.slice(0, 3).map(([key]) => key);
       setSelectedCard(card);
       setSelectedCardKeys(keysToSelect);
     } else {
       setSelectedCard(card);
-      setSelectedCardKeys([cardKey]); // ✅ 정확한 key로 선택
+      setSelectedCardKeys([cardKey]);
     }
   };
-  
+
+  const handleCardSubmit = async () => {
+    if (!roomId || !gameData || selectedCardKeys.length === 0 || !selectedCard) return;
+    await submitCard(roomId, selectedCardKeys.map(k => gameData.playerCards[myUid!][k]), gameData);
+    setSelectedCard(null);
+    setSelectedCardKeys([]);
+  };
+
+  const handleDraw = async () => {
+    if (!roomId || !gameData) return;
+    await drawCard(roomId, gameData, (deck: SetStateAction<string[]>, updatedHand: SetStateAction<Record<string, string>>) => {
+      setBombDeck(deck);
+      setBombHand(updatedHand);
+      setInsertBombModalOpen(true);
+    });
+  };
+
+  const handleInsertBomb = async (index: number) => {
+    if (!roomId || !gameData) return;
+    await insertBombAt(roomId, gameData, bombDeck, bombHand, index);
+    setInsertBombModalOpen(false);
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -144,18 +178,15 @@ const ExplodingKittens = () => {
       </div>
 
       <div className="playroom-center-zone" style={{ height: "30%", display: "flex", gap: "2rem", justifyContent: "center", alignItems: "center" }}>
-        <div
-          className="playroom-card playroom-used-card"
-          style={{ width: "12%", height: "100%", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
+        <div className="playroom-card playroom-used-card">
           {gameData.playedCard || ""}
         </div>
-        <div
-          className="playroom-card playroom-deck-card"
-          style={{ width: "12%", height: "100%", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}
-        >
-        <div className="playroom-deck-count">{gameData.deck.length}</div>
+        <div className="playroom-card playroom-deck-card" onClick={handleDraw}>
+          <div className="playroom-deck-count">{gameData.deck.length}</div>
         </div>
+        <button onClick={handleCardSubmit} disabled={selectedCardKeys.length === 0}>
+          카드 제출
+        </button>
       </div>
 
       <div className="playroom-my-cards" style={{ height: "35%" }}>
@@ -163,14 +194,14 @@ const ExplodingKittens = () => {
           <div
             key={key}
             className={`playroom-card ${selectedCardKeys.includes(key) ? "selected" : ""}`}
-            onClick={() => handleCardClick(card, key)} // ✅ key도 넘김
+            onClick={() => handleCardClick(card, key)}
           >
             {card}
           </div>
         ))}
       </div>
 
-      <div className="playroom-chat-container" style={{ height: "20%" }}> 
+      <div className="playroom-chat-container" style={{ height: "20%" }}>
         <div className="playroom-chat-resizer" onMouseDown={startResizing}></div>
         <div className="playroom-chat-box">
           <div className="playroom-chat-messages">
@@ -185,7 +216,6 @@ const ExplodingKittens = () => {
             })}
             <div ref={scrollRef} />
           </div>
-
           <div className="playroom-chat-input">
             <input
               value={input}
@@ -197,6 +227,23 @@ const ExplodingKittens = () => {
           </div>
         </div>
       </div>
+
+      <FavorModal
+        isOpen={favorModalOpen}
+        hand={gameData?.playerCards[myUid!] || {}}
+        onCardSelect={async (key: any) => {
+          if (favorTarget && roomId && myUid) {
+            await handleFavorSelectedCard(roomId, myUid, favorTarget, key);
+            setFavorModalOpen(false);
+          }
+        }}
+      />
+
+      <InsertBombModal
+        isOpen={insertBombModalOpen}
+        deck={bombDeck}
+        onSelect={handleInsertBomb}
+      />
     </div>
   );
 };

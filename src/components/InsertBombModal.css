@@ -1,0 +1,52 @@
+.insert-bomb-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .insert-bomb-modal {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .bomb-deck-view {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .deck-card {
+    padding: 0.75rem 1.25rem;
+    background: #f8f8f8;
+    border: 1px solid #bbb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+  
+  .insert-slot {
+    width: 20px;
+    height: 80px;
+    background-color: rgba(255, 0, 0, 0.3);
+    cursor: pointer;
+    border-radius: 4px;
+    align-self: center;
+    transition: background-color 0.2s;
+  }
+  
+  .insert-slot:hover {
+    background-color: rgba(255, 0, 0, 0.6);
+  }

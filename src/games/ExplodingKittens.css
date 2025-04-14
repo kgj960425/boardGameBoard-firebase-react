@@ -1,13 +1,15 @@
+  /* background-image: url('../assets/images/explodingKittens/ek_back.png'); 경로 확인 필요 */
+/* 기본 레이아웃 */
 .playroom-container {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100vh;
   max-width: 1080px;
-  width: 100%;
-  background-color: #f2f6ec;
-  box-sizing: border-box;
-  gap: 1rem;
   margin: 0 auto;
+  background-color: #f2f6ec;
+  gap: 1rem;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .playroom-player-bar {
@@ -21,190 +23,136 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 0.8rem;
-}
-
-.playroom-circle {
-  width: 40px;
-  height: 40px;
-  background-color: #ddd;
-  border-radius: 50%;
-  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+  color: #333;
 }
 
 .playroom-player-photo {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 0.25rem;
-  border: 2px solid #333;
-}
-
-.playroom-player-info {
-  text-align: center;
-  font-size: 0.7rem;
-  color: #333;
 }
 
 .playroom-center-zone {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 2rem;
-  margin: 1rem 0;
-  position: relative;
-  z-index: 10;
 }
 
 .playroom-card {
-  width: 70px;
-  height: 100px;
   background-color: #fff;
-  border: 2px solid #333;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  transition: all 0.2s;
 }
 
-.playroom-used-card {
-  background-color: #fdf0b4;
+.playroom-card.selected {
+  border-color: #ff4081;
+  background-color: #ffeef3;
 }
 
 .playroom-deck-card {
   position: relative;
-  background-image: url('../assets/images/explodingKittens/ek_back.png'); /* 경로 확인 필요 */
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: transparent;
-  border: none;
-  width: 100%; /* 부모가 크기 조절하므로 비율 맞춰서 커짐 */
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .playroom-deck-count {
-  position: absolute;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  color:white;
-  font-size: 1.8rem;
   font-weight: bold;
-  pointer-events: none;
+  font-size: 1.5rem;
+  color: #333;
 }
 
 .playroom-my-cards {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  position: relative;
-  z-index: 10;
-}
-
-.playroom-chat-box {
-  background-color: rgba(10, 10, 10, 0.7);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-top: 2px solid #444; /* ✅ 상단만 테두리 표시 */
-  border-left: none;
-  border-right: none;
-  border-bottom: none;
-  height: 200px;
-  border-radius: 0; /* ✅ 둥글기 제거 */
 }
 
 .playroom-chat-container {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   position: relative;
-  z-index: 0; /* 채팅은 UI만 띄워져 있고 클릭은 안 받음 */
+}
+
+.playroom-chat-resizer {
+  height: 6px;
+  background-color: #ccc;
+  cursor: row-resize;
+}
+
+.playroom-chat-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .playroom-chat-messages {
-  min-height: 200px;
-  padding: 1em;
+  flex: 1;
   overflow-y: auto;
-  font-size: 0.9em;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  background-color: white;
-}
-
-.playroom-chat-messages::-webkit-scrollbar {
-  display: none;
-}
-
-.playroom-chat-message {
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
-}
-
-.playroom-chat-message-mine {
-  align-items: flex-end;
-}
-
-.playroom-chat-bubble {
-  padding: 0.6em 1em;
-  border-radius: 1em;
-  max-width: 75%;
-  word-break: break-word;
-  font-size: 0.95rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.playroom-chat-bubble.mine {
-  background-color: #fff3b0;
-  color: #000;
-  border-top-right-radius: 0.2em;
+  gap: 0.25rem;
 }
 
 .playroom-chat-input {
   display: flex;
-  border-top: 1px solid #333;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-top: 1px solid #eee;
 }
 
 .playroom-chat-input input {
   flex: 1;
-  padding: 0.8em;
-  background: transparent;
-  border: none;
-  color: black;
-  background-color: white;
-  font-size: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }
 
 .playroom-chat-input button {
-  padding: 0.8em 1em;
-  background-color: goldenrod;
-  color: black;
-  font-weight: bold;
+  padding: 0.5rem 1rem;
+  background-color: #444;
+  color: white;
   border: none;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
-  border-left: 1px solid #555;
 }
 
-/* 전체 뷰포트 가로 스케일 제한 */
-body {
+.chat-message {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100dvh;
-  margin: 0;
-  background-color: #f2f6ec;
-  overflow: hidden;
+  flex-direction: column;
 }
 
-.playroom-card.selected {
-  border-color: #ffa500;
-  transform: scale(1.1);
-  box-shadow: 0 0 8px #ffa500;
+.chat-bubble {
+  padding: 0.5rem 1rem;
+  border-radius: 16px;
+  max-width: 75%;
+  word-break: break-word;
+}
+
+.chat-bubble.mine {
+  background-color: #fff176;
+  align-self: flex-end;
+}
+
+.chat-bubble.other {
+  background-color: #eee;
+  align-self: flex-start;
+}
+
+.chat-nickname {
+  font-size: 0.75rem;
+  color: #666;
+  margin-bottom: 0.25rem;
 }

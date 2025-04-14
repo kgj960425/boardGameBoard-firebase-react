@@ -1,0 +1,47 @@
+.favor-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .favor-modal {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .favor-card-list {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .favor-card-button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 12px;
+    border: 2px solid #333;
+    background-color: #fefefe;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .favor-card-button:hover {
+    background-color: #f0f0f0;
+    border-color: #ff4081;
+    color: #ff4081;
+  }
+  

@@ -1,7 +1,8 @@
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import { auth, db } from "../firebase/firebase";
 
-// 🔹 카드 덱 생성 및 셔플
+// ---------------------- 카드 로직 유틸 ----------------------
+
 const generateFullDeck = (): string[] => [
   ...Array(4).fill("Attack"),
   ...Array(4).fill("Skip"),
@@ -32,6 +33,8 @@ const getPlayerByTurn = (
   const alive = turnOrder.filter(uid => !deadPlayers.includes(uid));
   return alive[turn % alive.length];
 };
+
+// ---------------------- 초기화 및 턴 저장 ----------------------
 
 const initializeGame = async (roomId: string) => {
   const gameId = `r.${roomId}`;
@@ -89,7 +92,6 @@ const initializeGame = async (roomId: string) => {
   await setDoc(doc(db, gameId, "now"), gameData);
 };
 
-// 🔹 턴 저장
 const saveNextTurn = async ({
   roomId, turn, currentPlayer, nextPlayer,
   playerCards, deck, discardPile, discard,
@@ -123,16 +125,217 @@ const saveNextTurn = async ({
   });
 };
 
-// generateFullDeck — 전체 카드 구성
-// shuffle — 셔플 함수
-// getPlayerByTurn — 턴 수에 따라 현재 플레이어 계산
-// initializeGame — 게임 초기화 로직
-// saveNextTurn — 턴 저장 로직
+// ---------------------- 카드 제출 처리 ----------------------
+
+type GameData = {
+  turn: number;
+  turnStart: Date;
+  turnEnd: Date | null;
+  currentPlayer: string;
+  nextPlayer: string | null;
+  playerCards: Record<string, Record<string, string>>;
+  deck: string[];
+  discardPile: string[];
+  discard: string[];
+  playedCard: string | null;
+  lastPlayedCard: string | null;
+  turnStack: number;
+  remainingActions: number;
+  deadPlayers: string[];
+  turnOrder: string[];
+};
+
+async function submitCard(
+  roomId: string,
+  selectedCards: string[],
+  nowData: GameData
+) {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  if (nowData.currentPlayer !== uid) {
+    alert("지금은 당신의 턴이 아닙니다.");
+    return;
+  }
+
+  const myHand = Object.values(nowData.playerCards[uid] || {});
+  const isValid = selectedCards.every(card => myHand.includes(card));
+  if (!isValid) {
+    alert("제출한 카드 중 유효하지 않은 카드가 있습니다.");
+    return;
+  }
+
+  const updatedHand = { ...nowData.playerCards[uid] };
+  Object.entries(updatedHand).forEach(([k, v]) => {
+    if (selectedCards.includes(v)) delete updatedHand[k];
+  });
+
+  const updatedDiscard = [...(nowData.discard ?? []), ...selectedCards];
+  const updatedNowData = {
+    ...nowData,
+    playerCards: {
+      ...nowData.playerCards,
+      [uid]: updatedHand,
+    },
+    discard: updatedDiscard,
+    turnStack: selectedCards.includes("Attack")
+      ? nowData.turnStack + 1
+      : nowData.turnStack,
+  };
+
+  const nowRef = doc(db, `r.${roomId}`, "now");
+  const turnId = nowData.turn.toString().padStart(3, "0");
+  const turnRef = doc(db, `r.${roomId}`, turnId);
+
+  await updateDoc(nowRef, updatedNowData);
+  await setDoc(turnRef, {
+    ...nowData,
+    discard: updatedDiscard,
+    historyType: true,
+  });
+}
+
+async function drawCard(
+  roomId: string,
+  nowData: GameData,
+  onNeedInsertBomb: (deck: string[], updatedHand: Record<string, string>) => void
+): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const nowRef = doc(db, `r.${roomId}`, "now");
+
+  const deck = [...nowData.deck];
+  const topCard = deck.shift();
+  const myHand = { ...nowData.playerCards[uid] };
+
+  if (!topCard) return;
+
+  if (topCard === "Exploding Kitten") {
+    const defuseEntry = Object.entries(myHand).find(([_, v]) => v === "Defuse");
+
+    if (defuseEntry) {
+      const [defuseKey] = defuseEntry;
+      delete myHand[defuseKey];
+      onNeedInsertBomb(deck, myHand);
+      return;
+    } else {
+      const updatedDead = [...nowData.deadPlayers, uid];
+      const updatedOrder = nowData.turnOrder.filter((x) => x !== uid);
+
+      await updateDoc(nowRef, {
+        ...nowData,
+        deadPlayers: updatedDead,
+        turnOrder: updatedOrder,
+      });
+      return;
+    }
+  }
+
+  const slot = Date.now().toString();
+  myHand[slot] = topCard;
+
+  const nextPlayer = getPlayerByTurn(
+    nowData.turn + 1,
+    nowData.turnOrder,
+    nowData.deadPlayers
+  );
+
+  await setDoc(doc(db, `r.${roomId}`, nowData.turn.toString().padStart(3, "0")), {
+    ...nowData,
+    historyType: true,
+  });
+
+  await updateDoc(nowRef, {
+    playerCards: {
+      ...nowData.playerCards,
+      [uid]: myHand,
+    },
+    deck,
+    discard: [],
+    turnStack: 0,
+    currentPlayer: nowData.nextPlayer,
+    nextPlayer,
+    turn: nowData.turn + 1,
+  });
+}
+
+async function insertBombAt(
+  roomId: string,
+  nowData: GameData,
+  deck: string[],
+  updatedHand: Record<string, string>,
+  insertIndex: number
+): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const newDeck = [...deck];
+  newDeck.splice(insertIndex, 0, "Exploding Kitten");
+
+  const nowRef = doc(db, `r.${roomId}`, "now");
+  const nextPlayer = getPlayerByTurn(
+    nowData.turn + 1,
+    nowData.turnOrder,
+    nowData.deadPlayers
+  );
+
+  await setDoc(doc(db, `r.${roomId}`, nowData.turn.toString().padStart(3, "0")), {
+    ...nowData,
+    historyType: true,
+  });
+
+  await updateDoc(nowRef, {
+    playerCards: {
+      ...nowData.playerCards,
+      [uid]: updatedHand,
+    },
+    deck: newDeck,
+    discard: [],
+    turnStack: 0,
+    currentPlayer: nowData.nextPlayer,
+    nextPlayer,
+    turn: nowData.turn + 1,
+  });
+}
+
+async function handleFavorSelectedCard(
+  roomId: string,
+  fromUid: string,
+  toUid: string,
+  cardKey: string
+): Promise<void> {
+  const nowRef = doc(db, `r.${roomId}`, "now");
+  const nowSnap = await getDoc(nowRef);
+  const nowData = nowSnap.data() as GameData;
+  if (!nowData) return;
+
+  const fromHand = { ...nowData.playerCards[fromUid] };
+  const toHand = { ...nowData.playerCards[toUid] };
+  const selectedCard = fromHand[cardKey];
+  if (!selectedCard) return;
+
+  delete fromHand[cardKey];
+  const newSlot = Date.now().toString();
+  toHand[newSlot] = selectedCard;
+
+  await updateDoc(nowRef, {
+    playerCards: {
+      ...nowData.playerCards,
+      [fromUid]: fromHand,
+      [toUid]: toHand,
+    },
+  });
+}
 
 export {
-  generateFullDeck, 
+  generateFullDeck,
   shuffle,
   getPlayerByTurn,
   initializeGame,
-  saveNextTurn
+  saveNextTurn,
+  submitCard,
+  drawCard,
+  insertBombAt,
+  handleFavorSelectedCard,
 };
