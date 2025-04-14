@@ -203,8 +203,12 @@ async function drawCard(
   const uid = auth.currentUser?.uid;
   if (!uid) return;
 
-  const nowRef = doc(db, `r.${roomId}`, "now");
+  if (nowData.remainingActions <= 0) {
+    alert("이미 턴을 마쳤습니다.");
+    return;
+  }
 
+  const nowRef = doc(db, `r.${roomId}`, "now");
   const deck = [...nowData.deck];
   const topCard = deck.shift();
   const myHand = { ...nowData.playerCards[uid] };
@@ -227,6 +231,7 @@ async function drawCard(
         ...nowData,
         deadPlayers: updatedDead,
         turnOrder: updatedOrder,
+        remainingActions: 0,
       });
       return;
     }
@@ -257,6 +262,7 @@ async function drawCard(
     currentPlayer: nowData.nextPlayer,
     nextPlayer,
     turn: nowData.turn + 1,
+    remainingActions: 0,
   });
 }
 
@@ -296,6 +302,7 @@ async function insertBombAt(
     currentPlayer: nowData.nextPlayer,
     nextPlayer,
     turn: nowData.turn + 1,
+    remainingActions: 0,
   });
 }
 
