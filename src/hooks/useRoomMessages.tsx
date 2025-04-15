@@ -17,7 +17,7 @@ export default function useRoomMessages(messageCollectionId: string | null) {
     if (!messageCollectionId) return;
 
     const q = query(
-      collection(db, messageCollectionId),
+      collection(db, "Rooms",messageCollectionId, "chatting"),
       orderBy("createTime", "asc")
     );
 

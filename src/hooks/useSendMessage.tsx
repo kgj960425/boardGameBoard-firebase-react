@@ -6,7 +6,7 @@ export default function useSendMessage(messageCollectionId: string | null) {
     if (!messageCollectionId || !auth.currentUser?.uid || !content.trim()) return;
 
     try {
-      await addDoc(collection(db, messageCollectionId), {
+      await addDoc(collection(db, "Rooms",messageCollectionId, "chatting"), {
         uid: auth.currentUser.uid,
         nickname: auth.currentUser.displayName || "익명",
         content,

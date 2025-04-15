@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
+import {doc, setDoc, getDoc, updateDoc, collection} from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 
 const generateFullDeck = (): string[] => [
@@ -33,16 +33,15 @@ const getPlayerByTurn = (
 };
 
 const initializeGame = async (roomId: string) => {
-  const gameId = `r.${roomId}`;
-  const firstTurnRef = doc(db, gameId, "0");
-  if ((await getDoc(firstTurnRef)).exists()) return;
+  const historyDocRef = doc(db, "Rooms", roomId, "history", "00000000");
+  const playerCollectionRef = collection(db, "Rooms", roomId, "player");
 
-  const roomSnap = await getDoc(doc(db, "A.rooms", roomId));
-  if (!roomSnap.exists()) return;
+  const playerSnapshots = await getDoc(doc(playerCollectionRef));
+  const players = playerSnapshots.docs.map((doc) => doc.id);
+  if (players.length === 0) return;
 
-  const players = Object.keys(roomSnap.data().player);
   const turnOrder = shuffle(players);
-  let deck = shuffle(generateFullDeck());
+  const deck = shuffle(generateFullDeck());
 
   const playerCards: Record<string, Record<string, string>> = {};
   for (const uid of players) {
@@ -95,9 +94,9 @@ const initializeGame = async (roomId: string) => {
     },
   };
 
-  await setDoc(firstTurnRef, gameData);
-  await setDoc(doc(db, gameId, "now"), gameData);
+  await setDoc(historyDocRef, gameData);
 };
+
 
 const saveNextTurn = async ({
   roomId, turn, currentPlayer, nextPlayer,
