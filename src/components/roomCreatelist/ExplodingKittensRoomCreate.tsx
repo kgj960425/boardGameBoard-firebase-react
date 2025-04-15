@@ -3,6 +3,7 @@ import "./ExplodingKittensRoomCreate.css";
 import { collection, getDocs, setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../../firebase/firebase";
 import { useNavigate } from "react-router-dom";
+import userDefaultImage from "../../assets/images/userDefault.jpg";
 
 const ExplodingKittensRoomCreate: React.FC = () => {
   const [settings, setSettings] = useState({
@@ -10,7 +11,7 @@ const ExplodingKittensRoomCreate: React.FC = () => {
     maxPlayers: 5,
     turnTimeLimit: 0,
   });
-
+  const roomCollectionName = "Rooms";
   const navigate = useNavigate();
 
   const update = (key: string, value: any) => {
@@ -26,49 +27,69 @@ const ExplodingKittensRoomCreate: React.FC = () => {
     }
 
     const user = auth.currentUser?.uid;
-    const nick = auth.currentUser?.displayName;
-    if (!user || !nick) {
+    const nickname = auth.currentUser?.displayName;
+    if (!user || !nickname) {
       alert("로그인이 필요합니다.");
       return;
     }
     
     try {
-      const snapshot = await getDocs(collection(db, "A.rooms"));
+      // 1. 현재 존재하는 방 ID 목록 가져오기
+      const snapshot = await getDocs(collection(db, roomCollectionName));
       const ids = snapshot.docs
         .map((doc) => parseInt(doc.id))
         .filter((id) => !isNaN(id));
+  
+      const roomId = (ids.length > 0 ? Math.max(...ids) + 1 : 0)
+        .toString()
+        .padStart(8, "0");
+  
+      const roomRef = doc(db, roomCollectionName, roomId);
 
-      const newId = ids.length > 0 ? Math.max(...ids) + 1 : 1;
-      const roomId = newId.toString();
-
+      // 2. 방 정보 작성
       const roomData = {
-        title,
+        title : title,
         game: "Exploding Kittens",
-        state: "waiting",
-        createdAt: serverTimestamp(),
+        createdDttm: serverTimestamp(),
+        createUser: user,
+        updateDttm: null,
+        updateUser: null,
         host: user,
-        player: {
-          [user]: {
-            nickname: nick,
-            photoURL: auth.currentUser?.photoURL ?? "",
-            state: "ready",
-            lastActive: serverTimestamp(),
-            joinedAt: serverTimestamp(),
-          },
-        },
-        messages: `m.${roomId}`,
-        games: `r.${roomId}`,
         passwordYn: false,
         password: "",
-        gameSetting: {
-          max: maxPlayers,
-          min: 2, // 필요시 따로 조정 가능
-          timeLimit: turnTimeLimit,
-        },
+        status: "waiting",
+        max: maxPlayers,
+        min: 2,
       };
 
-      await setDoc(doc(db, "A.rooms", roomId), roomData);
+      // 3. 방 문서 생성
+      await setDoc(roomRef, roomData);
+      const settingRef = doc(db, `Rooms/${roomId}/setting/setting`);
+      const settingData = {
+        title : "exploding Kittens",
+        explodingKittens : 4,
+        defuse : 6,
+        timeLimit : turnTimeLimit,
+      };
+    
+      await setDoc(settingRef, settingData);
+
+      // 4. 방 플레이어 정보 작성
+      const playerRef = doc(db, `Rooms/${roomId}/player/${user}`);
+      const playerData = {
+        nickname: nickname ?? "이름을 지정해 주세요.",
+        photoURL: auth.currentUser?.photoURL ?? userDefaultImage,
+        status: "online",
+        state: "ready",
+        lastActive: serverTimestamp(),
+        joinedAt: serverTimestamp(),
+      };
+      await setDoc(playerRef, playerData);
+
+
+      // 5. 방으로 이동
       navigate(`/room/${roomId}/wait`);
+
     } catch (error) {
       console.error("방 생성 실패:", error);
       alert("방 생성 중 오류가 발생했습니다.");

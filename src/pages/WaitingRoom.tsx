@@ -1,6 +1,14 @@
 import { useRef, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { deleteField, doc, onSnapshot, updateDoc, Timestamp } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+  deleteDoc,
+  collection,
+  getDocs,
+  Timestamp,
+} from "firebase/firestore";
 import { db, auth } from "../firebase/firebase";
 import { ChatMessage } from "../hooks/useRoomMessages";
 import useRoomMessages from "../hooks/useRoomMessages";
@@ -14,6 +22,7 @@ export default function WaitingRoom() {
   const navigate = useNavigate();
 
   const [roomInfo, setRoomInfo] = useState<any>(null);
+  const [players, setPlayers] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [hasJoined, setHasJoined] = useState(false);
@@ -23,15 +32,7 @@ export default function WaitingRoom() {
   const messages: ChatMessage[] = useRoomMessages(roomInfo?.messages ?? null);
 
   const currentUserUid = auth.currentUser?.uid;
-
-  const players = Object.entries(roomInfo?.player || {}).map(([uid, data]: any) => ({ uid, ...data }));
   const { addBot } = useAddBot(roomId, players.length);
-
-  // const onlineRef = ref(db, '/status/' + otherUserId);
-  //   onValue(onlineRef, (snap) => {
-  //     const state = snap.val()?.state;
-  //     console.log(`${otherUserId} is ${state}`);
-  // });
 
   useEffect(() => {
     if (!roomId) {
@@ -39,11 +40,20 @@ export default function WaitingRoom() {
       return;
     }
 
-    const ref = doc(db, "A.rooms", roomId);
+    const ref = doc(db, "Rooms", roomId);
     const unsubscribe = onSnapshot(ref, (docSnap) => {
       if (docSnap.exists()) setRoomInfo(docSnap.data());
     });
 
+    return () => unsubscribe();
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    const unsubscribe = onSnapshot(collection(db, "Rooms", roomId, "player"), (snap) => {
+      const playerList = snap.docs.map((doc) => ({ uid: doc.id, ...doc.data() }));
+      setPlayers(playerList);
+    });
     return () => unsubscribe();
   }, [roomId]);
 
@@ -53,30 +63,25 @@ export default function WaitingRoom() {
 
   useEffect(() => {
     if (roomInfo?.state === "playing") {
-      if(!currentUserUid) return;
-      const isInRoom = !!roomInfo.player?.[currentUserUid];
-      if (isInRoom && currentUserUid) {
+      if (!currentUserUid) return;
+      const isInRoom = players.some((p) => p.uid === currentUserUid);
+      if (isInRoom) {
         navigate(`/room/${roomId}/play`);
       } else {
         navigate("/");
       }
     }
-  }, [roomInfo?.state, roomInfo?.player, currentUserUid, roomId, navigate]);
+  }, [roomInfo?.state, players, currentUserUid, roomId, navigate]);
 
   useEffect(() => {
-    if (!roomInfo || !currentUserUid) return;
-
-    const isInRoom = !!roomInfo.player?.[currentUserUid];
-
-    if (isInRoom && !hasJoined) {
-      setHasJoined(true);
-    }
-
+    if (!currentUserUid) return;
+    const isInRoom = players.some((p) => p.uid === currentUserUid);
+    if (isInRoom && !hasJoined) setHasJoined(true);
     if (!isInRoom && hasJoined && !leaving) {
       alert("강퇴되었습니다.");
       navigate("/");
     }
-  }, [roomInfo, currentUserUid, hasJoined, leaving]);
+  }, [players, currentUserUid, hasJoined, leaving, navigate]);
 
   if (!roomInfo) return <div>로딩 중...</div>;
 
@@ -88,13 +93,11 @@ export default function WaitingRoom() {
   const canStartGame = isHost && players.length >= minPlayers && readyPlayers.length === players.length;
 
   const toggleReady = async () => {
-    if (!roomId || !currentUserUid) return;
-    const ref = doc(db, "A.rooms", roomId);
-    const newState = currentUser?.state === "ready" ? "not ready" : "ready";
+    if (!roomId || !currentUserUid || !currentUser) return;
+    const playerRef = doc(db, "Rooms", roomId, "player", currentUserUid);
+    const newState = currentUser.state === "ready" ? "not ready" : "ready";
     try {
-      await updateDoc(ref, {
-        [`player.${currentUserUid}.state`]: newState,
-      });
+      await updateDoc(playerRef, { state: newState });
     } catch (e) {
       console.error("준비 상태 변경 실패:", e);
     }
@@ -102,9 +105,8 @@ export default function WaitingRoom() {
 
   const handleStartGame = async () => {
     if (!roomId) return;
-  
     try {
-      const roomRef = doc(db, "A.rooms", roomId);
+      const roomRef = doc(db, "Rooms", roomId);
       await updateDoc(roomRef, { state: "playing" });
       navigate(`/room/${roomId}/play`);
     } catch (error) {
@@ -115,9 +117,7 @@ export default function WaitingRoom() {
   const handleKick = async (uid: string) => {
     if (!roomId) return;
     try {
-      await updateDoc(doc(db, "A.rooms", roomId), {
-        [`player.${uid}`]: deleteField(),
-      });
+      await deleteDoc(doc(db, "Rooms", roomId, "player", uid));
     } catch (error) {
       console.error("강퇴 실패:", error);
     }
@@ -127,42 +127,16 @@ export default function WaitingRoom() {
     if (!roomId || !currentUserUid) return;
     try {
       setLeaving(true);
-
-      const roomRef = doc(db, "A.rooms", roomId);
-      const updatedPlayerList = { ...roomInfo.player };
-      delete updatedPlayerList[currentUserUid];
+      await deleteDoc(doc(db, "Rooms", roomId, "player", currentUserUid));
 
       if (isHost) {
-        const nonBotEntries = Object.entries(updatedPlayerList).filter(
-          ([_, info]) => {
-            const player = info as { nickname?: string; joinedAt?: Timestamp };
-            return !player.nickname?.startsWith("봇");
-          }
-        );
-
-        if (nonBotEntries.length === 0) {
-          await updateDoc(roomRef, {
-            [`player.${currentUserUid}`]: deleteField(),
-            state: "finished",
-          });
+        const remaining = players.filter(p => p.uid !== currentUserUid && !p.nickname?.startsWith("봇"));
+        if (remaining.length === 0) {
+          await updateDoc(doc(db, "Rooms", roomId), { state: "finished" });
         } else {
-          const sorted = nonBotEntries.sort((a, b) => {
-            const playerA = a[1] as { joinedAt?: Timestamp };
-            const playerB = b[1] as { joinedAt?: Timestamp };
-            const aTime = playerA.joinedAt?.seconds ?? 0;
-            const bTime = playerB.joinedAt?.seconds ?? 0;
-            return aTime - bTime;
-          });
-          const newHostUid = sorted[0][0];
-          await updateDoc(roomRef, {
-            [`player.${currentUserUid}`]: deleteField(),
-            host: newHostUid,
-          });
+          const sorted = remaining.sort((a, b) => (a.joinedAt?.seconds ?? 0) - (b.joinedAt?.seconds ?? 0));
+          await updateDoc(doc(db, "Rooms", roomId), { host: sorted[0].uid });
         }
-      } else {
-        await updateDoc(roomRef, {
-          [`player.${currentUserUid}`]: deleteField(),
-        });
       }
 
       navigate("/");
@@ -179,8 +153,8 @@ export default function WaitingRoom() {
   return (
     <div className="waiting-room">
       <div className="left-panel">
-        <div className="player-list">
-          {players.filter((p) => p.uid !== currentUserUid).slice(0, 4).map((p) => (
+        <div className="player-list" style={{ display: 'flex', flexDirection: 'column', gap: '1em', padding: '1em' }}>
+          {players.map((p) => (
             <div key={p.uid} className="player-box">
               <img src={p.photoURL || "/default-profile.png"} alt={`${p.nickname} 프로필`} className="player-photo" />
               <div className="player-info">

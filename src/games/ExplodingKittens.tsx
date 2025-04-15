@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback, SetStateAction } from "react";
 import { useParams } from "react-router-dom";
+
 import { db, auth } from "../firebase/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import {
   initializeGame,
   submitCard,
@@ -9,13 +10,14 @@ import {
   insertBombAt,
   handleFavorSelectedCard,
 } from "./ExplodingKittensUtil";
+import "./ExplodingKittens.css";
+
 import useRoomMessages, { ChatMessage } from "../hooks/useRoomMessages";
 import useSendMessage from "../hooks/useSendMessage";
 import { usePlayerInfo } from "../hooks/usePlayerInfo";
-// Ensure the correct path to FavorModal is used
 import FavorModal from "../components/FavorModal"; // Update this path if the file is located elsewhere
 import InsertBombModal from "../components/InsertBombModal";
-import "./ExplodingKittens.css";
+
 
 interface GameData {
   turn: number;
@@ -31,18 +33,29 @@ interface GameData {
   lastPlayedCard: string | null;
   turnOrder: string[];
   deadPlayers: string[];
-  turnStack: number; // Added property
-  remainingActions: number; // Added property
+  turnStack: number;
+  remainingActions: number;
+  modalRequest: {
+    type: string,
+    targets: string[],
+    from: string,
+    payload: {},
+    createdAt: Timestamp
+  };
+  explosionEvent: {
+    player: string,
+    hasDefuse: false,
+  };
 }
 
 const ExplodingKittens = () => {
-  const { roomId } = useParams<{ roomId: string }>();
+  const {roomId} = useParams<{ roomId: string }>();
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [input, setInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
   const [favorModalOpen, setFavorModalOpen] = useState(false);
-  const [favorTarget, setFavorTarget] = useState<string | null>(null);
+  const [favorTarget] = useState<string | null>(null);
   const [insertBombModalOpen, setInsertBombModalOpen] = useState(false);
   const [bombDeck, setBombDeck] = useState<string[]>([]);
   const [bombHand, setBombHand] = useState<Record<string, string>>({});
@@ -54,23 +67,12 @@ const ExplodingKittens = () => {
   const playerInfo = usePlayerInfo(roomId);
   const sendMessage = useSendMessage(`m.${roomId}`);
   const messages: ChatMessage[] = useRoomMessages(`m.${roomId}`);
-
-  const resizeChat = useCallback((e: MouseEvent) => {
-    if (!resizingRef.current) return;
-    const containerHeight = window.innerHeight;
-    const newHeightPx = containerHeight - e.clientY;
-    const newHeightPercent = (newHeightPx / containerHeight) * 100;
-    const clamped = Math.max(10, Math.min(newHeightPercent, 60));
-    const chat = document.querySelector('.playroom-chat-container') as HTMLElement;
-    if (chat) chat.style.height = `${clamped}%`;
-  }, []);
-
+  
   useEffect(() => {
     if (roomId) initializeGame(roomId);
   }, [roomId]);
 
   useEffect(() => {
-    if (!roomId) return;
     const unsub = onSnapshot(doc(db, `r.${roomId}`, "now"), (docSnap) => {
       if (docSnap.exists()) {
         setGameData(docSnap.data() as GameData);
@@ -82,6 +84,59 @@ const ExplodingKittens = () => {
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+
+
+  function setSeeFutureModalOpen(arg0: boolean) {
+    throw new Error("Function not implemented.");
+  }
+  function setChooseCardModalOpen(arg0: boolean) {
+    throw new Error("Function not implemented.");
+  }
+  
+  //modal open 이벤트
+  useEffect(() => {
+    if (!gameData || !myUid) return;
+
+    const { modalRequest, explosionEvent } = gameData;
+    
+    if(gameData?.modalRequest.targets?.includes(myUid)) {
+      switch (modalRequest.type) {
+        case "favor":
+          setFavorModalOpen(true);
+          break;
+        case "seeFuture":
+          setSeeFutureModalOpen(true);
+          break;
+        case "chooseCard":
+          setChooseCardModalOpen(true);
+          break;
+        default:
+          break;
+      }
+  }
+
+  if (explosionEvent?.player === myUid) {
+    if (explosionEvent.hasDefuse) {
+      // Defuse 카드 사용 로직
+    } else {
+      // 게임 탈락 처리 로직
+    }
+  }
+  }, [gameData?.modalRequest.targets?.includes(myUid ?? "")]);
+
+
+
+
+  const resizeChat = useCallback((e: MouseEvent) => {
+    if (!resizingRef.current) return;
+    const containerHeight = window.innerHeight;
+    const newHeightPx = containerHeight - e.clientY;
+    const newHeightPercent = (newHeightPx / containerHeight) * 100;
+    const clamped = Math.max(10, Math.min(newHeightPercent, 60));
+    const chat = document.querySelector('.playroom-chat-container') as HTMLElement;
+    if (chat) chat.style.height = `${clamped}%`;
+  }, []);
 
   useEffect(() => {
     window.addEventListener("mousemove", resizeChat);
@@ -154,9 +209,9 @@ const ExplodingKittens = () => {
     resizingRef.current = false;
   };
 
-  if (!gameData || !roomId) return null;
+  const myCards = myUid ? Object.entries(gameData?.playerCards[myUid] || {}) : [];
 
-  const myCards = myUid ? Object.entries(gameData.playerCards[myUid] || {}) : [];
+  if (!gameData || !roomId || !myUid) return;
 
   return (
     <div className="playroom-container">

@@ -3,6 +3,7 @@ import { db, auth } from "../firebase/firebase";
 import {
   collection,
   doc,
+  getDocs,
   onSnapshot,
   query,
   runTransaction,
@@ -13,16 +14,19 @@ import "./RoomList.css";
 import Modal from "../components/Modal";
 import RoomCreateForm from "../components/RoomCreateForm";
 import { cleanupGhostRooms } from "../hooks/cleanUpGhostRooms";
+import userDefaultImage from "../assets/images/userDefault.jpg";
 
 interface Room {
   id: string;
   title: string;
-  state: string;
+  status: string;
   player: Record<string, any>;
+  host: string;
   passwordYn: string;
   password: string;
   messages: string;
-  maxPlayers: number;
+  max: number;
+  min: number;
   game: string;
 }
 
@@ -33,19 +37,21 @@ const RoomList = () => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      query(collection(db, "A.rooms"), where("state", "==", "waiting")),
+      query(collection(db, "Rooms"), where("status", "==", "waiting")),
       (snapshot) => {
         const list: Room[] = snapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
             title: data.title,
-            state: data.state,
+            status: data.status,
             player: data.player || {},
+            host: data.host || "",
             passwordYn: data.passwordYn,
             password: data.password,
             messages: data.messages,
-            maxPlayers: data.maxPlayers,
+            max: data.max || 0,
+            min: data.min || 0,
             game: data.game,
           };
         });
@@ -64,46 +70,42 @@ const RoomList = () => {
   const handleEnterRoom = async (roomId: string) => {
     const user = auth.currentUser;
     const uid = user?.uid;
-    const nickname = user?.displayName || "익명";
-    const photoURL = user?.photoURL || "/default-profile.png";
+    const nickname = user?.displayName || "이름을 지정해 주세요.";
+    const photoURL = user?.photoURL || userDefaultImage;
 
     if (!uid) {
       alert("로그인이 필요합니다.");
       return;
     }
 
-    const roomRef = doc(db, "A.rooms", roomId);
-
+    const roomRef = doc(db, "Rooms", roomId);
+    const newPlayerRef = doc(db, "Rooms", roomId, "player", uid);
     try {
       await runTransaction(db, async (transaction) => {
         const roomSnap = await transaction.get(roomRef);
-        if (!roomSnap.exists()) {
-          throw new Error("방이 존재하지 않습니다.");
-        }
-
+        if (!roomSnap.exists()) throw new Error("방이 존재하지 않습니다.");
+  
         const roomData = roomSnap.data();
-
-        if (roomData.state !== "waiting") {
-          throw new Error("게임이 시작되었거나 종료된 방입니다.");
-        }
-
-        const currentPlayers = Object.keys(roomData.player || {});
+        if (roomData.status !== "waiting") throw new Error("게임이 시작되었거나 종료된 방입니다.");
+  
+        const playerDocsSnap = await getDocs(collection(db, "Rooms", roomId, "player")); // 🔥 수정된 부분
+        const currentPlayers = playerDocsSnap.docs.map((doc) => doc.id);
+  
         if (currentPlayers.includes(uid)) return;
-        if (currentPlayers.length >= roomData.maxPlayers) {
-          throw new Error("방 정원이 가득 찼습니다.");
-        }
-
-        transaction.update(roomRef, {
-          [`player.${uid}`]: {
-            nickname,
-            photoURL,
-            joinedAt: new Date(),
-            lastActive: new Date(),
-          },
+        if (currentPlayers.length >= roomData.max) throw new Error("방 정원이 가득 찼습니다.");
+  
+        transaction.set(newPlayerRef, {
+          nickname : nickname,
+          photoURL : photoURL,
+          joinedAt: new Date(),
+          lastActive: new Date(),
+          state: "ready",
+          status: "online",
         });
       });
-
+  
       navigate(`/room/${roomId}/wait`);
+
     } catch (err: any) {
       console.error("입장 중 오류", err);
       alert(err.message || "방 입장 중 오류가 발생했습니다.");
@@ -135,7 +137,7 @@ const RoomList = () => {
               <th>방 제목</th>
               <th>게임 상태</th>
               <th>시간 제한</th>
-              <th>인원 수</th>
+              <th>인원 제한</th>
               <th></th>
             </tr>
           </thead>
@@ -147,9 +149,9 @@ const RoomList = () => {
                 <tr key={room.id}>
                   <td>{room.game}</td>
                   <td>{room.title}</td>
-                  <td>{room.state}</td>
+                  <td>{room.status}</td>
                   <td>0</td>
-                  <td>{Object.keys(room.player || {}).length}/{room.maxPlayers}</td>
+                  <td>최대 {room.max} 명</td>
                   <td>
                     <button className="enter-button" onClick={() => handleEnterRoom(room.id)}>
                       입장
@@ -172,7 +174,7 @@ const RoomList = () => {
             </div>
             <div className="room-card-title">{room.title}</div>
             <div className="room-card-bottom">
-              <span>{Object.keys(room.player || {}).length}/{room.maxPlayers} 명</span>
+              <span>{Object.keys(room.player || {}).length}/{room.max} 명</span>
               <button className="enter-button" onClick={() => handleEnterRoom(room.id)}>
                 입장
               </button>

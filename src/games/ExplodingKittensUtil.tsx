@@ -1,8 +1,6 @@
 import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 
-// ---------------------- 카드 로직 유틸 ----------------------
-
 const generateFullDeck = (): string[] => [
   ...Array(4).fill("Attack"),
   ...Array(4).fill("Skip"),
@@ -33,8 +31,6 @@ const getPlayerByTurn = (
   const alive = turnOrder.filter(uid => !deadPlayers.includes(uid));
   return alive[turn % alive.length];
 };
-
-// ---------------------- 초기화 및 턴 저장 ----------------------
 
 const initializeGame = async (roomId: string) => {
   const gameId = `r.${roomId}`;
@@ -86,6 +82,17 @@ const initializeGame = async (roomId: string) => {
     remainingActions: 1,
     deadPlayers: [],
     turnOrder,
+    modalRequest: {
+      type: null,
+      targets: [],
+      from: null,
+      payload: {},
+      createdAt: new Date(),
+    },
+    explosionEvent: {
+      player: null,
+      hasDefuse: null,
+    },
   };
 
   await setDoc(firstTurnRef, gameData);

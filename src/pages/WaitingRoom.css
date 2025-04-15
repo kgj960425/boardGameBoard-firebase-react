@@ -22,62 +22,61 @@
 }
 
 .player-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 1em;
   padding: 1em;
-  height: 65%;
   background-color: rgba(20, 20, 20, 0.6);
   border: 2px solid #8b0000;
   border-radius: 12px;
+  max-height: 65%;
+  overflow-y: auto;
 }
 
 .player-box {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 2%;
+  gap: 1em;
   background-color: rgba(255, 255, 255, 0.05);
-  padding: 1.5%;
+  padding: 1em;
   border-radius: 1em;
-  border: 0.15em solid #444;
-  height: 25vh;
+  border: 2px solid #444;
 }
 
 .player-photo {
-  width: 23vh;
-  height: 23vh;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background-color: #333;
-  border: 0.4vh solid goldenrod;
-  flex-shrink: 0;
+  border: 3px solid goldenrod;
+  object-fit: cover;
 }
 
 .player-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .player-name {
-  font-size: 2em;
+  font-size: 1.4em;
   font-weight: bold;
 }
 
 .player-status.ready {
   color: lightgreen;
-  font-size: 2em;
+  font-size: 1.2em;
 }
 
 .player-status.not-ready {
   color: tomato;
-  font-size: 2em;
+  font-size: 1.2em;
 }
 
 .player-status.host {
   color: gold;
   font-weight: bold;
-  font-size: 2em;
+  font-size: 1.2em;
   text-transform: uppercase;
 }
 
