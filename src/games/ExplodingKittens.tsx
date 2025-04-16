@@ -49,10 +49,8 @@ interface GameData {
 }
 
 const ExplodingKittens = () => {
-  const {roomId} = useParams<{ roomId: string }>();
-  if (!roomId) return;
+  const { roomId } = useParams<{ roomId: string }>();
   const [gameData, setGameData] = useState<GameData | null>(null);
-  if (!gameData) return;
   const [input, setInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
@@ -67,11 +65,14 @@ const ExplodingKittens = () => {
 
   const myUid = auth.currentUser?.uid;
   const playerInfo = usePlayerInfo(roomId);
+  
+  if(!roomId) return null;
   const sendMessage = useSendMessage(roomId);
   const messages: ChatMessage[] = useRoomMessages(roomId);
 
   //game data onSnapshot
   useEffect(() => {
+    if (!roomId) return;
     const q = query(
       collection(db, "Rooms", roomId, "history"),
       orderBy("turnStart", "desc"),
@@ -191,6 +192,7 @@ const ExplodingKittens = () => {
   };
 
   const handleInsertBomb = async (index: number) => {
+    if(!roomId || !gameData) return;
     await insertBombAt(roomId, gameData, bombDeck, bombHand, index);
     setInsertBombModalOpen(false);
   };
@@ -288,7 +290,7 @@ const ExplodingKittens = () => {
         hand={gameData?.playerCards[myUid!] || {}}
         onCardSelect={async (key: any) => {
           if (favorTarget && roomId && myUid) {
-            await handleFavorSelectedCard(roomId, myUid, favorTarget, key);
+            await handleFavorSelectedCard(roomId, myUid, favorTarget, key, gameData.turn ); ;
             setFavorModalOpen(false);
           }
         }}

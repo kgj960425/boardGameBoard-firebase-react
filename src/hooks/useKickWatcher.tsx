@@ -1,4 +1,3 @@
-// hooks/useKickWatcher.ts
 import { useEffect } from "react";
 import { onSnapshot, doc } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase";
@@ -11,13 +10,10 @@ export const useKickWatcher = (roomId: string) => {
   useEffect(() => {
     if (!roomId || !uid) return;
 
-    const roomRef = doc(db, "A.rooms", roomId);
+    const myPlayerRef = doc(db, "Rooms", roomId, "player", uid);
 
-    const unsubscribe = onSnapshot(roomRef, (docSnap) => {
-      const data = docSnap.data();
-      const players = data?.player || {};
-
-      if (!players[uid]) {
+    const unsubscribe = onSnapshot(myPlayerRef, (docSnap) => {
+      if (!docSnap.exists()) {
         alert("방에서 강퇴되었습니다.");
         navigate("/roomlist");
       }

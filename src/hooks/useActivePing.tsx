@@ -1,4 +1,3 @@
-// hooks/useActivePing.ts
 import { useEffect } from "react";
 import { updateDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -8,11 +7,11 @@ export const useActivePing = (roomId: string, uid: string) => {
     if (!roomId || !uid) return;
 
     const interval = setInterval(() => {
-      const userField = `player.${uid}.lastActive`;
-      updateDoc(doc(db, "A.rooms", roomId), {
-        [userField]: serverTimestamp()
+      const playerRef = doc(db, "Rooms", roomId, "player", uid); // ✅ 서브컬렉션 경로
+      updateDoc(playerRef, {
+        lastActive: serverTimestamp(),
       });
-    }, 30000); // 30초
+    }, 30000); // 30초마다 ping
 
     return () => clearInterval(interval);
   }, [roomId, uid]);

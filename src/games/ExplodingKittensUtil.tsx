@@ -299,9 +299,10 @@ async function handleFavorSelectedCard(
   fromUid: string,
   toUid: string,
   cardKey: string,
-  turnId: string
+  turn: any,
 ) {
-  const ref = doc(db, "Rooms", roomId, "history", turnId);
+  const ref = doc(db, "Rooms", roomId, "history", turn);
+  console.log(ref);
   const snap = await getDoc(ref);
   if (!snap.exists()) return;
   const data = snap.data() as any;

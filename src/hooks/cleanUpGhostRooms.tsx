@@ -5,23 +5,28 @@ export const cleanupGhostRooms = async () => {
   const now = Date.now();
   const threeMinute = 3 * 60 * 1000;
 
-  const roomQuery = query(collection(db, "A.rooms"), where("state", "==", "waiting"));
+  const roomQuery = query(collection(db, "Rooms"), where("state", "==", "waiting"));
   const snapshot = await getDocs(roomQuery);
 
   for (const roomDoc of snapshot.docs) {
-    const roomData = roomDoc.data();
-    const playerEntries = Object.entries(roomData.player || {});
+    const roomId = roomDoc.id;
+    const playerColRef = collection(db, "Rooms", roomId, "player");
+    const playerSnap = await getDocs(playerColRef);
 
-    const allGhosts = playerEntries.every(([_, player]: [string, any]) => {
-      const lastActive = player?.lastActive?.toMillis?.();
+    // 플레이어가 없으면 => 유령방 취급
+    if (playerSnap.empty) {
+      await updateDoc(doc(db, "Rooms", roomId), { state: "finished" });
+      continue;
+    }
+
+    const allGhosts = playerSnap.docs.every((doc) => {
+      const data = doc.data();
+      const lastActive = data.lastActive?.toMillis?.();
       return !lastActive || lastActive < now - threeMinute;
     });
 
     if (allGhosts) {
-      const roomRef = doc(db, "A.rooms", roomDoc.id);
-      await updateDoc(roomRef, {
-        state: "finished"
-      });
+      await updateDoc(doc(db, "Rooms", roomId), { state: "finished" });
     }
   }
 };
