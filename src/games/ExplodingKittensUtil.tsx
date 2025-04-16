@@ -115,7 +115,7 @@ const saveNextTurn = async ({
   lastPlayedCard: string | null;
   deadPlayers?: string[];
 }) => {
-  await setDoc(doc(db, `r.${roomId}`, `${turn}`), {
+  await setDoc(doc(db, roomId, `${turn}`), {
     turn,
     turnStart: new Date(),
     turnEnd: null,
@@ -154,50 +154,32 @@ type GameData = {
 async function submitCard(
   roomId: string,
   selectedCards: string[],
-  nowData: GameData
+  gameData: any
 ) {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
 
-  if (nowData.currentPlayer !== uid) {
-    alert("지금은 당신의 턴이 아닙니다.");
-    return;
-  }
-
-  const myHand = Object.values(nowData.playerCards[uid] || {});
+  const myHand = Object.values(gameData.playerCards[uid] || {});
   const isValid = selectedCards.every(card => myHand.includes(card));
-  if (!isValid) {
-    alert("제출한 카드 중 유효하지 않은 카드가 있습니다.");
-    return;
-  }
+  if (!isValid) return;
 
-  const updatedHand = { ...nowData.playerCards[uid] };
+  const updatedHand: Record<string, string> = { ...gameData.playerCards[uid] };
   Object.entries(updatedHand).forEach(([k, v]) => {
     if (selectedCards.includes(v)) delete updatedHand[k];
   });
 
-  const updatedDiscard = [...(nowData.discard ?? []), ...selectedCards];
-  const updatedNowData = {
-    ...nowData,
+  const updatedDiscard = [...(gameData.discard ?? []), ...selectedCards];
+
+  const turnRef = doc(db, "Rooms", roomId, "history", gameData.turn.toString().padStart(3, "0"));
+  await updateDoc(turnRef, {
     playerCards: {
-      ...nowData.playerCards,
+      ...gameData.playerCards,
       [uid]: updatedHand,
     },
     discard: updatedDiscard,
     turnStack: selectedCards.includes("Attack")
-      ? nowData.turnStack + 1
-      : nowData.turnStack,
-  };
-
-  const nowRef = doc(db, `r.${roomId}`, "now");
-  const turnId = nowData.turn.toString().padStart(3, "0");
-  const turnRef = doc(db, `r.${roomId}`, turnId);
-
-  await updateDoc(nowRef, updatedNowData);
-  await setDoc(turnRef, {
-    ...nowData,
-    discard: updatedDiscard,
-    historyType: true,
+      ? gameData.turnStack + 1
+      : gameData.turnStack,
   });
 }
 
@@ -252,7 +234,7 @@ async function drawCard(
     nowData.deadPlayers
   );
 
-  await setDoc(doc(db, `r.${roomId}`, nowData.turn.toString().padStart(3, "0")), {
+  await setDoc(doc(db, roomId, nowData.turn.toString().padStart(8, "0")), {
     ...nowData,
     historyType: true,
   });
@@ -316,15 +298,16 @@ async function handleFavorSelectedCard(
   roomId: string,
   fromUid: string,
   toUid: string,
-  cardKey: string
-): Promise<void> {
-  const nowRef = doc(db, `r.${roomId}`, "now");
-  const nowSnap = await getDoc(nowRef);
-  const nowData = nowSnap.data() as GameData;
-  if (!nowData) return;
+  cardKey: string,
+  turnId: string
+) {
+  const ref = doc(db, "Rooms", roomId, "history", turnId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data() as any;
 
-  const fromHand = { ...nowData.playerCards[fromUid] };
-  const toHand = { ...nowData.playerCards[toUid] };
+  const fromHand = { ...data.playerCards[fromUid] };
+  const toHand = { ...data.playerCards[toUid] };
   const selectedCard = fromHand[cardKey];
   if (!selectedCard) return;
 
@@ -332,9 +315,9 @@ async function handleFavorSelectedCard(
   const newSlot = Date.now().toString();
   toHand[newSlot] = selectedCard;
 
-  await updateDoc(nowRef, {
+  await updateDoc(ref, {
     playerCards: {
-      ...nowData.playerCards,
+      ...data.playerCards,
       [fromUid]: fromHand,
       [toUid]: toHand,
     },

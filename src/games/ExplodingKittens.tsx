@@ -52,6 +52,7 @@ const ExplodingKittens = () => {
   const {roomId} = useParams<{ roomId: string }>();
   if (!roomId) return;
   const [gameData, setGameData] = useState<GameData | null>(null);
+  if (!gameData) return;
   const [input, setInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
@@ -89,6 +90,13 @@ const ExplodingKittens = () => {
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  function setSeeFutureModalOpen(_arg0: boolean) {
+    throw new Error("Function not implemented.");
+  }
+  function setChooseCardModalOpen(_arg0: boolean) {
+    throw new Error("Function not implemented.");
+  }
   
   //modal open 이벤트
   useEffect(() => {
@@ -183,7 +191,6 @@ const ExplodingKittens = () => {
   };
 
   const handleInsertBomb = async (index: number) => {
-    if (!roomId || !gameData) return;
     await insertBombAt(roomId, gameData, bombDeck, bombHand, index);
     setInsertBombModalOpen(false);
   };
@@ -297,11 +304,3 @@ const ExplodingKittens = () => {
 };
 
 export default ExplodingKittens;
-
-function setSeeFutureModalOpen(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
-function setChooseCardModalOpen(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
-
