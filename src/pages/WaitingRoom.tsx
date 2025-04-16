@@ -16,7 +16,6 @@ import useSendMessage from "../hooks/useSendMessage";
 import useAddBot from "../hooks/useAddBot";
 import GameSettingPanel from "./gameSettingPanel/GameSettingPanels";
 import "./WaitingRoom.css";
-import {initializeGame} from "../games/ExplodingKittensUtil.tsx";
 
 export default function WaitingRoom() {
   const { roomId } = useParams();
@@ -29,8 +28,8 @@ export default function WaitingRoom() {
   const [hasJoined, setHasJoined] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
-  const sendMessage = useSendMessage(roomId ?? null);
-  const messages: ChatMessage[] = useRoomMessages(roomId ?? null);
+  const sendMessage = useSendMessage(roomInfo?.messages ?? null);
+  const messages: ChatMessage[] = useRoomMessages(roomInfo?.messages ?? null);
 
   const currentUserUid = auth.currentUser?.uid;
   const { addBot } = useAddBot(roomId, players.length);
@@ -63,7 +62,7 @@ export default function WaitingRoom() {
   }, [messages]);
 
   useEffect(() => {
-    if (roomInfo?.status === "playing") {
+    if (roomInfo?.state === "playing") {
       if (!currentUserUid) return;
       const isInRoom = players.some((p) => p.uid === currentUserUid);
       if (isInRoom) {
@@ -72,7 +71,7 @@ export default function WaitingRoom() {
         navigate("/");
       }
     }
-  }, [roomInfo?.status, players, currentUserUid, roomId, navigate]);
+  }, [roomInfo?.state, players, currentUserUid, roomId, navigate]);
 
   useEffect(() => {
     if (!currentUserUid) return;
@@ -106,11 +105,9 @@ export default function WaitingRoom() {
 
   const handleStartGame = async () => {
     if (!roomId) return;
-
     try {
       const roomRef = doc(db, "Rooms", roomId);
-      await updateDoc(roomRef, { status: "playing" });
-      initializeGame(roomId);
+      await updateDoc(roomRef, { state: "playing" });
       navigate(`/room/${roomId}/play`);
     } catch (error) {
       console.error("게임 시작 실패:", error);

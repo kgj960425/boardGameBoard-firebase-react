@@ -1,4 +1,4 @@
-import {doc, setDoc, getDoc, updateDoc, collection} from "firebase/firestore";
+import {doc, setDoc, getDoc, updateDoc, collection, getDocs} from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 
 const generateFullDeck = (): string[] => [
@@ -36,7 +36,7 @@ const initializeGame = async (roomId: string) => {
   const historyDocRef = doc(db, "Rooms", roomId, "history", "00000000");
   const playerCollectionRef = collection(db, "Rooms", roomId, "player");
 
-  const playerSnapshots = await getDoc(doc(playerCollectionRef));
+  const playerSnapshots = await getDocs(playerCollectionRef);
   const players = playerSnapshots.docs.map((doc) => doc.id);
   if (players.length === 0) return;
 
