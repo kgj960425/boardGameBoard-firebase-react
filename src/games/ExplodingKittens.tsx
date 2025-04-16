@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, SetStateAction } from "react"
 import { useParams } from "react-router-dom";
 
 import { db, auth } from "../firebase/firebase";
-import { doc, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, doc, limit, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
 import {
   initializeGame,
   submitCard,
@@ -50,6 +50,7 @@ interface GameData {
 
 const ExplodingKittens = () => {
   const {roomId} = useParams<{ roomId: string }>();
+  if (!roomId) return;
   const [gameData, setGameData] = useState<GameData | null>(null);
   const [input, setInput] = useState("");
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
@@ -65,34 +66,29 @@ const ExplodingKittens = () => {
 
   const myUid = auth.currentUser?.uid;
   const playerInfo = usePlayerInfo(roomId);
-  const sendMessage = useSendMessage(`m.${roomId}`);
-  const messages: ChatMessage[] = useRoomMessages(`m.${roomId}`);
-  
-  useEffect(() => {
-    if (roomId) initializeGame(roomId);
-  }, [roomId]);
+  const sendMessage = useSendMessage(roomId);
+  const messages: ChatMessage[] = useRoomMessages(roomId);
 
+  //game data onSnapshot
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, `r.${roomId}`, "now"), (docSnap) => {
-      if (docSnap.exists()) {
+    const q = query(
+      collection(db, "Rooms", roomId, "history"),
+      orderBy("turnStart", "desc"),
+      limit(1)
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const docSnap = snapshot.docs[0];
+      if (docSnap?.exists()) {
         setGameData(docSnap.data() as GameData);
       }
     });
     return () => unsub();
   }, [roomId]);
 
+  //chatting scroll fresh update
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-
-
-  function setSeeFutureModalOpen(arg0: boolean) {
-    throw new Error("Function not implemented.");
-  }
-  function setChooseCardModalOpen(arg0: boolean) {
-    throw new Error("Function not implemented.");
-  }
   
   //modal open 이벤트
   useEffect(() => {
@@ -124,9 +120,6 @@ const ExplodingKittens = () => {
     }
   }
   }, [gameData?.modalRequest.targets?.includes(myUid ?? "")]);
-
-
-
 
   const resizeChat = useCallback((e: MouseEvent) => {
     if (!resizingRef.current) return;
@@ -304,3 +297,11 @@ const ExplodingKittens = () => {
 };
 
 export default ExplodingKittens;
+
+function setSeeFutureModalOpen(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+function setChooseCardModalOpen(arg0: boolean) {
+  throw new Error("Function not implemented.");
+}
+
