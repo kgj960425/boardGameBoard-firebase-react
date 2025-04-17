@@ -1,12 +1,10 @@
-import { useEffect, useState, useRef, useCallback, SetStateAction } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 
 import { db, auth } from "../firebase/firebase";
-import { collection, doc, limit, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
+import { collection, limit, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import {
-  initializeGame,
   submitCard,
-  drawCard,
   insertBombAt,
   handleFavorSelectedCard,
 } from "./ExplodingKittensUtil";
@@ -64,8 +62,9 @@ const ExplodingKittens = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const myUid = auth.currentUser?.uid;
+  // const isMyTurn = myUid === gameData?.currentPlayer;
   const playerInfo = usePlayerInfo(roomId);
-  
+
   if(!roomId) return null;
   const sendMessage = useSendMessage(roomId);
   const messages: ChatMessage[] = useRoomMessages(roomId);
@@ -75,7 +74,8 @@ const ExplodingKittens = () => {
     if (!roomId) return;
     const q = query(
       collection(db, "Rooms", roomId, "history"),
-      orderBy("turnStart", "desc"),
+      where("turnEnd", "!=", null),
+      orderBy("turnEnd", "desc"),
       limit(1)
     );
     const unsub = onSnapshot(q, (snapshot) => {
@@ -119,15 +119,15 @@ const ExplodingKittens = () => {
         default:
           break;
       }
-  }
-
-  if (explosionEvent?.player === myUid) {
-    if (explosionEvent.hasDefuse) {
-      // Defuse 카드 사용 로직
-    } else {
-      // 게임 탈락 처리 로직
     }
-  }
+
+    if (explosionEvent?.player === myUid) {
+      if (explosionEvent.hasDefuse) {
+        // Defuse 카드 사용 로직
+      } else {
+        // 게임 탈락 처리 로직
+      }
+    }
   }, [gameData?.modalRequest.targets?.includes(myUid ?? "")]);
 
   const resizeChat = useCallback((e: MouseEvent) => {
@@ -177,18 +177,18 @@ const ExplodingKittens = () => {
 
   const handleCardSubmit = async () => {
     if (!roomId || !gameData || selectedCardKeys.length === 0 || !selectedCard) return;
-    await submitCard(roomId, selectedCardKeys.map(k => gameData.playerCards[myUid!][k]), gameData);
+    await submitCard(
+      roomId,
+      selectedCardKeys.map(k => gameData.playerCards[myUid!][k]),
+      gameData,
+      (deck, updatedHand) => {
+        setBombDeck(deck);
+        setBombHand(updatedHand);
+        setInsertBombModalOpen(true);
+      }
+    );
     setSelectedCard(null);
     setSelectedCardKeys([]);
-  };
-
-  const handleDraw = async () => {
-    if (!roomId || !gameData) return;
-    await drawCard(roomId, gameData, (deck: SetStateAction<string[]>, updatedHand: SetStateAction<Record<string, string>>) => {
-      setBombDeck(deck);
-      setBombHand(updatedHand);
-      setInsertBombModalOpen(true);
-    });
   };
 
   const handleInsertBomb = async (index: number) => {
@@ -238,12 +238,14 @@ const ExplodingKittens = () => {
         <div className="playroom-card playroom-used-card">
           {gameData.playedCard || ""}
         </div>
-        <div className="playroom-card playroom-deck-card" onClick={handleDraw}>
+        <div className="playroom-card playroom-deck-card">
           <div className="playroom-deck-count">{gameData.deck.length}</div>
         </div>
-        <button onClick={handleCardSubmit} disabled={selectedCardKeys.length === 0}>
-          카드 제출
-        </button>
+        {myUid === gameData.currentPlayer && (
+          <button onClick={handleCardSubmit}>
+            {selectedCardKeys.length === 0 ? "패스" : "카드 제출"}
+          </button>
+        )}
       </div>
 
       <div className="playroom-my-cards" style={{ height: "35%" }}>

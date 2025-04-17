@@ -6,8 +6,6 @@ import {
   updateDoc,
   deleteDoc,
   collection,
-  getDocs,
-  Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../firebase/firebase";
 import { ChatMessage } from "../hooks/useRoomMessages";
