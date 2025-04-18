@@ -7,6 +7,7 @@ import {
   submitCard,
   insertBombAt,
   handleFavorSelectedCard,
+  handleRecoverCard,
 } from "./ExplodingKittensUtil";
 import "./ExplodingKittens.css";
 
@@ -15,6 +16,7 @@ import useSendMessage from "../hooks/useSendMessage";
 import { usePlayerInfo } from "../hooks/usePlayerInfo";
 import FavorModal from "../components/FavorModal"; // Update this path if the file is located elsewhere
 import InsertBombModal from "../components/InsertBombModal";
+import RecoverFromDiscardModal from "../components/RecoverFromDiscardModal"; // Update this path if the file is located elsewhere
 
 
 interface GameData {
@@ -53,6 +55,7 @@ const ExplodingKittens = () => {
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
   const [favorModalOpen, setFavorModalOpen] = useState(false);
+  const [RecoverFromDiscardModalOpen, setRecoverFromDiscardModalOpen] = useState(false);
   const [favorTarget] = useState<string | null>(null);
   const [insertBombModalOpen, setInsertBombModalOpen] = useState(false);
   const [bombDeck, setBombDeck] = useState<string[]>([]);
@@ -115,6 +118,9 @@ const ExplodingKittens = () => {
           break;
         case "chooseCard":
           setChooseCardModalOpen(true);
+          break;
+        case "recover-from-discard":
+          setRecoverFromDiscardModalOpen(true);
           break;
         default:
           break;
@@ -181,11 +187,6 @@ const ExplodingKittens = () => {
       roomId,
       selectedCardKeys.map(k => gameData.playerCards[myUid!][k]),
       gameData,
-      (deck, updatedHand) => {
-        setBombDeck(deck);
-        setBombHand(updatedHand);
-        setInsertBombModalOpen(true);
-      }
     );
     setSelectedCard(null);
     setSelectedCardKeys([]);
@@ -303,6 +304,18 @@ const ExplodingKittens = () => {
         deck={bombDeck}
         onSelect={handleInsertBomb}
       />
+
+      <RecoverFromDiscardModal
+        isOpen={RecoverFromDiscardModalOpen}
+        discardPile={gameData.discardPile}
+        onSelect={async (card) => {
+          if (!roomId || !myUid || !gameData) return;
+          await handleRecoverCard(roomId, myUid, card, gameData);
+          setRecoverFromDiscardModalOpen(false);
+        }}
+        onClose={() => setRecoverFromDiscardModalOpen(false)}
+      />
+
     </div>
   );
 };

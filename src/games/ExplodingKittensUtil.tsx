@@ -100,24 +100,20 @@ const initializeGame = async (roomId: string) => {
 async function submitCard(
   roomId: string,
   selectedCards: string[],
-  gameData: any,
-  onNeedInsertBomb: (deck: string[], updatedHand: Record<string, string>) => void
-) {
+  gameData: any
+): Promise<Record<string, any> | null> {
   const uid = auth.currentUser?.uid;
-  if (!uid) return;
+  if (!uid) return null;
 
-  // 1. 현재 유저의 핸드 정보 복사
-  const myHand = { ...gameData.playerCards[uid] };
+  const myHand: Record<string, string> = { ...gameData.playerCards[uid] };
   const myCards = Object.values(myHand);
 
-  // 2. 선택한 카드가 유저 핸드에 모두 포함되어 있는지 검증
   const isValid = selectedCards.every(card => myCards.includes(card));
-  if (!isValid) return;
+  if (!isValid) return null;
 
-  // 3. 핸드에서 선택한 카드를 제거
   const updatedHand: Record<string, string> = {};
   let removed = 0;
-  for (const [key, value] of Object.entries(myHand) as [string, string][]) {
+  for (const [key, value] of Object.entries(myHand)) {
     if (selectedCards.includes(value) && removed < selectedCards.length) {
       removed++;
     } else {
@@ -125,97 +121,83 @@ async function submitCard(
     }
   }
 
-  const isAttack = selectedCards.includes("Attack");
-  const isSkip = selectedCards.includes("Skip");
-
   const updatedDiscard = [...(gameData.discard ?? []), ...selectedCards];
-  const nextTurn = gameData.turn + 1;
   const currentTurnId = gameData.turn.toString().padStart(8, "0");
-  const nextTurnId = nextTurn.toString().padStart(8, "0");
+  const currentTurnRef = doc(db, "Rooms", roomId, "history", currentTurnId);
 
-  // 4. 현재 턴 데이터 기록 (history 백업)
-  await setDoc(doc(db, "Rooms", roomId, "history", currentTurnId), {
-    ...gameData,
-    historyType: true,
-  });
-
-  // 5. Attack 또는 Skip 카드면 드로우 없이 바로 턴 종료
-  if (isAttack || isSkip) {
-    await setDoc(doc(db, "Rooms", roomId, "history", nextTurnId), {
-      ...gameData,
-      playerCards: {
-        ...gameData.playerCards,
-        [uid]: updatedHand,
-      },
-      discard: [],
-      discardPile: [...(gameData.discardPile ?? []), ...selectedCards],
-      currentPlayer: gameData.nextPlayer,
-      nextPlayer: getPlayerByTurn(nextTurn + 1, gameData.turnOrder, gameData.deadPlayers),
-      turn: nextTurn,
-      turnStart: new Date(),
-      turnEnd: null,
-      turnStack: isAttack ? gameData.turnStack + 1 : 0,
-      remainingActions: 0,
-    });
-    return;
-  }
-
-  // 6. 일반 카드일 경우: 드로우 진행
-  const deck = [...gameData.deck];
-  const topCard = deck.shift();
-  if (!topCard) return;
-
-  // 6-1. 드로우한 카드가 폭탄일 경우
-  if (topCard === "Exploding Kitten") {
-    const defuseEntry = Object.entries(updatedHand).find(([_, v]) => v === "Defuse");
-
-    if (defuseEntry) {
-      // 6-1-a. Defuse가 있으면 제거하고 유저에게 폭탄 삽입 위치 요청
-      delete updatedHand[defuseEntry[0]];
-      onNeedInsertBomb(deck, updatedHand);
-      return;
-    } else {
-      // 6-1-b. Defuse가 없으면 유저 탈락 처리 후 턴 넘김
-      const updatedDead = [...gameData.deadPlayers, uid];
-      await setDoc(doc(db, "Rooms", roomId, "history", nextTurnId), {
-        ...gameData,
-        playerCards: {
-          ...gameData.playerCards,
-          [uid]: updatedHand,
-        },
-        discard: updatedDiscard,
-        discardPile: [...(gameData.discardPile ?? []), ...selectedCards],
-        deadPlayers: updatedDead,
-        turnOrder: gameData.turnOrder.filter((x: string) => x !== uid),
-        turn: nextTurn,
-        turnStart: new Date(),
-        turnEnd: null,
-        remainingActions: 0,
-      });
-      return;
-    }
-  }
-
-  // 6-2. 일반 카드면 핸드에 추가
-  updatedHand[Date.now().toString()] = topCard;
-
-  // 7. 다음 턴 정보로 새로운 게임 상태 저장
-  await setDoc(doc(db, "Rooms", roomId, "history", nextTurnId), {
-    ...gameData,
+  await updateDoc(currentTurnRef, {
     playerCards: {
       ...gameData.playerCards,
       [uid]: updatedHand,
     },
-    discard: [],
-    discardPile: [...(gameData.discardPile ?? []), ...selectedCards],
-    deck,
-    turn: nextTurn,
-    currentPlayer: gameData.nextPlayer,
-    nextPlayer: getPlayerByTurn(nextTurn + 1, gameData.turnOrder, gameData.deadPlayers),
-    turnStart: new Date(),
-    turnEnd: null,
-    remainingActions: 0,
+    discard: updatedDiscard,
   });
+
+  return {
+    updatedHand,
+    updatedDiscard,
+  };
+}
+
+
+async function drawCard(
+  roomId: string,
+  gameData: any,
+  onNeedInsertBomb: (deck: string[], updatedHand: Record<string, string>) => void
+): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const deck = [...gameData.deck];
+  const topCard = deck.shift();
+  const myHand = { ...gameData.playerCards[uid] };
+
+  if (!topCard) return;
+
+  // 폭탄 뽑은 경우
+  if (topCard === "Exploding Kitten") {
+    const defuseEntry = Object.entries(myHand).find(([_, v]) => v === "Defuse");
+
+    if (defuseEntry) {
+      const [defuseKey] = defuseEntry;
+      delete myHand[defuseKey];
+      onNeedInsertBomb(deck, myHand);
+      return;
+    } else {
+      const updatedDead = [...gameData.deadPlayers, uid];
+      const updatedOrder = gameData.turnOrder.filter((x: string) => x !== uid);
+
+      await endTurn(
+        roomId,
+        {
+          ...gameData,
+          deadPlayers: updatedDead,
+          turnOrder: updatedOrder,
+        },
+        gameData.playerCards,
+        deck,
+        [],
+        gameData.discardPile
+      );
+      return;
+    }
+  }
+
+  // 일반 카드 뽑은 경우
+  const slot = Date.now().toString();
+  myHand[slot] = topCard;
+
+  await endTurn(
+    roomId,
+    gameData,
+    {
+      ...gameData.playerCards,
+      [uid]: myHand,
+    },
+    deck,
+    [],
+    gameData.discardPile
+  );
 }
 
 async function insertBombAt(
@@ -240,21 +222,18 @@ async function insertBombAt(
     ...nowData,
     historyType: true,
   });
-  await setDoc(doc(db, "Rooms", roomId, "history", nextTurnId), {
-    ...nowData,
-    playerCards: {
+
+  await endTurn(
+    roomId,
+    nowData,
+    {
       ...nowData.playerCards,
       [uid]: updatedHand,
     },
-    deck: newDeck,
-    discard: [],
-    turn: nextTurn,
-    currentPlayer: nowData.nextPlayer,
-    nextPlayer,
-    turnStart: new Date(),
-    turnEnd: null,
-    remainingActions: 0,
-  });
+    newDeck,
+    [],
+    nowData.discardPile,
+  );
 }
 
 
@@ -289,12 +268,171 @@ async function handleFavorSelectedCard(
   });
 }
 
+async function handleRecoverCard(
+  roomId: string,
+  uid: string,
+  selectedCard: string,
+  gameData: any
+) {
+  const turnId = gameData.turn.toString().padStart(8, "0");
+  const turnRef = doc(db, "Rooms", roomId, "history", turnId);
+
+  const discardPile = [...gameData.discardPile];
+  const cardIndex = discardPile.indexOf(selectedCard);
+  if (cardIndex !== -1) discardPile.splice(cardIndex, 1);
+
+  const updatedHand = { ...gameData.playerCards[uid] };
+  updatedHand[Date.now().toString()] = selectedCard;
+
+  await updateDoc(turnRef, {
+    [`playerCards.${uid}`]: updatedHand,
+    discardPile,
+    modalRequest: {
+      type: null,
+      from: null,
+      targets: [],
+      payload: {},
+      createdAt: null,
+    },
+  });
+}
+
+const endTurn = async (
+  roomId: string,
+  gameData: any,
+  updatedPlayerCards: Record<string, Record<string, string>>,
+  updatedDeck: string[],
+  discard: string[],
+  discardPile: string[],
+) => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const nextTurn = gameData.turn + 1;
+  const nextTurnId = nextTurn.toString().padStart(8, "0");
+  const nextPlayer = getPlayerByTurn(nextTurn, gameData.turnOrder, gameData.deadPlayers);
+
+  await setDoc(doc(db, "Rooms", roomId, "history", nextTurnId), {
+    ...gameData,
+    playerCards: updatedPlayerCards,
+    deck: updatedDeck,
+    discard: [],
+    discardPile,
+    currentPlayer: gameData.nextPlayer,
+    nextPlayer,
+    turn: nextTurn,
+    turnStart: new Date(),
+    turnEnd: null,
+    remainingActions: 0,
+  });
+};
+
+const resolveCardEffect = async (
+  roomId: string,
+  gameData: any,
+  selectedCards: string[]
+) => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const effectCard = selectedCards[0];
+  if (!effectCard) return;
+
+  const currentTurnId = gameData.turn.toString().padStart(8, "0");
+  const currentTurnRef = doc(db, "Rooms", roomId, "history", currentTurnId);
+
+  if (["Favor", "Shuffle", "See the Future"].includes(effectCard)) {
+    await updateDoc(currentTurnRef, {
+      modalRequest: {
+        type: effectCard.toLowerCase(),
+        from: uid,
+        targets: Object.keys(gameData.playerCards).filter((id) => id !== uid),
+        createdAt: new Date(),
+        payload: {},
+      },
+    });
+    return;
+  }
+
+  if (["Attack", "Skip"].includes(effectCard)) {
+    await updateDoc(currentTurnRef, {
+      nopeQueue: {
+        effectCard,
+        effectFrom: uid,
+        selectedCards,
+        createdAt: new Date(),
+        expireAt: new Date(Date.now() + 3000),
+        resolved: false,
+        nopes: [],
+      },
+    });
+    return;
+  }
+
+  const powerlessCards = [
+    "Taco Cat",
+    "Hairy Potato Cat",
+    "Rainbow Ralphing Cat",
+    "Cattermelon",
+    "Beard Cat",
+  ];
+
+  const allPowerless = selectedCards.every(card => powerlessCards.includes(card));
+  const unique = [...new Set(selectedCards)];
+
+  if (selectedCards.length === 2 && unique.length === 1 && allPowerless) {
+    await updateDoc(currentTurnRef, {
+      modalRequest: {
+        type: "steal-random",
+        from: uid,
+        targets: Object.keys(gameData.playerCards).filter((id) => id !== uid),
+        createdAt: new Date(),
+        payload: {},
+      },
+    });
+    return;
+  }
+
+  if (selectedCards.length === 3 && unique.length === 1 && allPowerless) {
+    await updateDoc(currentTurnRef, {
+      modalRequest: {
+        type: "steal-specific",
+        from: uid,
+        targets: Object.keys(gameData.playerCards).filter((id) => id !== uid),
+        createdAt: new Date(),
+        payload: {},
+      },
+    });
+    return;
+  }
+
+  const uniquePowerless = [...new Set(selectedCards.filter(c => powerlessCards.includes(c)))];
+  if (selectedCards.length === 5 && uniquePowerless.length === 5) {
+    await updateDoc(currentTurnRef, {
+      modalRequest: {
+        type: "recover-from-discard",
+        from: uid,
+        targets: [],
+        createdAt: new Date(),
+        payload: {
+          discardPile: gameData.discardPile ?? [],
+        },
+      },
+    });
+    return;
+  }
+};
+
+
 export {
   generateFullDeck,
   shuffle,
   getPlayerByTurn,
   initializeGame,
   submitCard,
+  drawCard,
+  endTurn,
   insertBombAt,
+  handleRecoverCard,
   handleFavorSelectedCard,
 };

@@ -1,0 +1,58 @@
+.recover-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .recover-modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .recover-card-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  
+  .recover-card {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    background-color: #f3f3f3;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .recover-card:hover {
+    background-color: #e2e2e2;
+  }
+  
+  .recover-cancel {
+    margin-top: 1rem;
+    background-color: #ff5c5c;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  
+  .recover-cancel:hover {
+    background-color: #e04848;
+  }
