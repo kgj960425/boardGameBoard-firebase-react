@@ -105,12 +105,13 @@ async function submitCard(
   const uid = auth.currentUser?.uid;
   if (!uid) return null;
 
+  //핸드 인증
   const myHand: Record<string, string> = { ...gameData.playerCards[uid] };
   const myCards = Object.values(myHand);
-
   const isValid = selectedCards.every(card => myCards.includes(card));
   if (!isValid) return null;
 
+  // 카드 제출
   const updatedHand: Record<string, string> = {};
   let removed = 0;
   for (const [key, value] of Object.entries(myHand)) {
@@ -132,6 +133,9 @@ async function submitCard(
     },
     discard: updatedDiscard,
   });
+
+  //모달 요청 처리 
+  await triggerModalRequestIfNeeded(roomId, gameData, selectedCards);
 
   return {
     updatedHand,
@@ -199,6 +203,91 @@ async function drawCard(
     gameData.discardPile
   );
 }
+
+/// 모달 요청 처리
+/// - Favor: 상대에게 카드 요청
+async function triggerModalRequestIfNeeded(
+  roomId: string,
+  gameData: any,
+  selectedCards: string[]
+) {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const effectCard = selectedCards[0];
+  if (!effectCard) return;
+
+  const currentTurnId = gameData.turn.toString().padStart(8, "0");
+  const currentTurnRef = doc(db, "Rooms", roomId, "history", currentTurnId);
+  const allTargets = Object.keys(gameData.playerCards).filter(id => id !== uid);
+
+  switch (effectCard) {
+    case "Favor":
+      await updateDoc(currentTurnRef, {
+        modalRequest: {
+          type: "favor",
+          from: uid,
+          targets: allTargets,
+          createdAt: new Date(),
+          payload: {},
+        },
+      });
+      break;
+
+    case "See the Future":
+      await updateDoc(currentTurnRef, {
+        modalRequest: {
+          type: "seeFuture",
+          from: uid,
+          targets: [uid],
+          createdAt: new Date(),
+          payload: {
+            topCards: gameData.deck.slice(0, 3),
+          },
+        },
+      });
+      break;
+
+    case "ChooseCard":
+      await updateDoc(currentTurnRef, {
+        modalRequest: {
+          type: "chooseCard",
+          from: uid,
+          targets: allTargets,
+          createdAt: new Date(),
+          payload: {},
+        },
+      });
+      break;
+
+    default: {
+      const powerless = [
+        "Taco Cat",
+        "Hairy Potato Cat",
+        "Rainbow Ralphing Cat",
+        "Cattermelon",
+        "Beard Cat",
+      ];
+      const uniquePowerless = [...new Set(selectedCards.filter(c => powerless.includes(c)))];
+
+      if (selectedCards.length === 5 && uniquePowerless.length === 5) {
+        await updateDoc(currentTurnRef, {
+          modalRequest: {
+            type: "recover-from-discard",
+            from: uid,
+            targets: [uid],
+            createdAt: new Date(),
+            payload: {
+              discardPile: gameData.discardPile ?? [],
+            },
+          },
+        });
+      }
+      break;
+    }
+  }
+}
+
 
 async function insertBombAt(
   roomId: string,

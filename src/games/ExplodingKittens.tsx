@@ -291,13 +291,14 @@ const ExplodingKittens = () => {
       <FavorModal
         isOpen={favorModalOpen}
         hand={gameData?.playerCards[myUid!] || {}}
-        onCardSelect={async (key: any) => {
+        onCardSelect={async (key) => {
           if (favorTarget && roomId && myUid) {
-            await handleFavorSelectedCard(roomId, myUid, favorTarget, key, gameData.turn ); ;
-            setFavorModalOpen(false);
+            await handleFavorSelectedCard(roomId, myUid, favorTarget, key, gameData.turn);
           }
         }}
+        onClose={() => setFavorModalOpen(false)}
       />
+
 
       <InsertBombModal
         isOpen={insertBombModalOpen}

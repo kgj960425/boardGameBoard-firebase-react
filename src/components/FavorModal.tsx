@@ -1,14 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import "./FavorModal.css";
 
 interface FavorModalProps {
   isOpen: boolean;
-  hand: Record<string, string>; // key: slotId, value: card name
+  hand: Record<string, string>;
   onCardSelect: (key: string) => void;
+  onClose: () => void;
 }
 
-const FavorModal: React.FC<FavorModalProps> = ({ isOpen, hand, onCardSelect }) => {
+const FavorModal: React.FC<FavorModalProps> = ({ isOpen, hand, onCardSelect, onClose }) => {
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
   if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    if (selectedKey) {
+      onCardSelect(selectedKey); // 선택된 카드 슬롯ID 전송
+      setSelectedKey(null);
+      onClose(); // 모달 닫기
+    }
+  };
 
   return (
     <div className="favor-modal-overlay">
@@ -18,13 +29,16 @@ const FavorModal: React.FC<FavorModalProps> = ({ isOpen, hand, onCardSelect }) =
           {Object.entries(hand).map(([key, card]) => (
             <button
               key={key}
-              className="favor-card-button"
-              onClick={() => onCardSelect(key)}
+              className={`favor-card-button ${selectedKey === key ? "selected" : ""}`}
+              onClick={() => setSelectedKey(key)}
             >
               {card}
             </button>
           ))}
         </div>
+        <button onClick={handleConfirm} disabled={!selectedKey}>
+          선택
+        </button>
       </div>
     </div>
   );

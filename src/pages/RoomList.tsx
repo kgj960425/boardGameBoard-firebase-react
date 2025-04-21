@@ -19,7 +19,7 @@ import userDefaultImage from "../assets/images/userDefault.jpg";
 interface Room {
   id: string;
   title: string;
-  status: string;
+  state: string;
   player: Record<string, any>;
   host: string;
   passwordYn: string;
@@ -37,14 +37,14 @@ const RoomList = () => {
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
-      query(collection(db, "Rooms"), where("status", "==", "waiting")),
+      query(collection(db, "Rooms"), where("state", "==", "waiting")),
       (snapshot) => {
         const list: Room[] = snapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
             title: data.title,
-            status: data.status,
+            state: data.state,
             player: data.player || {},
             host: data.host || "",
             passwordYn: data.passwordYn,
@@ -86,7 +86,7 @@ const RoomList = () => {
         if (!roomSnap.exists()) throw new Error("방이 존재하지 않습니다.");
   
         const roomData = roomSnap.data();
-        if (roomData.status !== "waiting") throw new Error("게임이 시작되었거나 종료된 방입니다.");
+        if (roomData.state !== "waiting") throw new Error("게임이 시작되었거나 종료된 방입니다.");
   
         const playerDocsSnap = await getDocs(collection(db, "Rooms", roomId, "player")); // 🔥 수정된 부분
         const currentPlayers = playerDocsSnap.docs.map((doc) => doc.id);
@@ -99,7 +99,7 @@ const RoomList = () => {
           photoURL : photoURL,
           joinedAt: new Date(),
           lastActive: new Date(),
-          state: "ready",
+          ready: false,
           status: "online",
         });
       });
@@ -149,7 +149,7 @@ const RoomList = () => {
                 <tr key={room.id}>
                   <td>{room.game}</td>
                   <td>{room.title}</td>
-                  <td>{room.status}</td>
+                  <td>{room.state}</td>
                   <td>0</td>
                   <td>최대 {room.max} 명</td>
                   <td>

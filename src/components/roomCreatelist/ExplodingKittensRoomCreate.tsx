@@ -57,7 +57,7 @@ const ExplodingKittensRoomCreate: React.FC = () => {
         host: user,
         passwordYn: false,
         password: "",
-        status: "waiting",
+        state: "waiting",
         max: maxPlayers,
         min: 2,
       };
@@ -80,7 +80,7 @@ const ExplodingKittensRoomCreate: React.FC = () => {
         nickname: nickname ?? "이름을 지정해 주세요.",
         photoURL: auth.currentUser?.photoURL ?? userDefaultImage,
         status: "online",
-        state: "ready",
+        ready: true,
         lastActive: serverTimestamp(),
         joinedAt: serverTimestamp(),
       };

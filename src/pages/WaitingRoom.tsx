@@ -14,6 +14,7 @@ import useSendMessage from "../hooks/useSendMessage";
 import useAddBot from "../hooks/useAddBot";
 import GameSettingPanel from "./gameSettingPanel/GameSettingPanels";
 import "./WaitingRoom.css";
+import { initializeGame } from "../games/ExplodingKittensUtil";
 
 export default function WaitingRoom() {
   const { roomId } = useParams();
@@ -85,7 +86,7 @@ export default function WaitingRoom() {
 
   const hostUid = roomInfo.host;
   const isHost = currentUserUid === hostUid;
-  const readyPlayers = players.filter((p) => p.state === "ready");
+  const readyPlayers = players.filter((p) => p.ready === true);
   const currentUser = players.find((p) => p.uid === currentUserUid);
   const minPlayers = parseInt(roomInfo?.gameSetting?.min ?? "2");
   const canStartGame = isHost && players.length >= minPlayers && readyPlayers.length === players.length;
@@ -93,9 +94,9 @@ export default function WaitingRoom() {
   const toggleReady = async () => {
     if (!roomId || !currentUserUid || !currentUser) return;
     const playerRef = doc(db, "Rooms", roomId, "player", currentUserUid);
-    const newState = currentUser.state === "ready" ? "not ready" : "ready";
+    const newState = currentUser.ready == true ? false : true;
     try {
-      await updateDoc(playerRef, { state: newState });
+      await updateDoc(playerRef, { ready : newState });
     } catch (e) {
       console.error("준비 상태 변경 실패:", e);
     }
@@ -106,6 +107,7 @@ export default function WaitingRoom() {
     try {
       const roomRef = doc(db, "Rooms", roomId);
       await updateDoc(roomRef, { state: "playing" });
+      initializeGame(roomId);
       navigate(`/room/${roomId}/play`);
     } catch (error) {
       console.error("게임 시작 실패:", error);
@@ -157,8 +159,8 @@ export default function WaitingRoom() {
               <img src={p.photoURL || "/default-profile.png"} alt={`${p.nickname} 프로필`} className="player-photo" />
               <div className="player-info">
                 <div className="player-name">{p.nickname}</div>
-                <div className={`player-status ${p.uid === hostUid ? "host" : p.state === "ready" ? "ready" : "not-ready"}`}>
-                  {p.uid === hostUid ? "HOST" : p.state === "ready" ? "Ready" : "Not Ready"}
+                <div className={`player-status ${p.uid === hostUid ? "host" : p.ready == true ? "ready" : "not-ready"}`}>
+                  {p.uid === hostUid ? "HOST" : p.ready == true ? "Ready" : "Not Ready"}
                 </div>
                 {isHost && (
                   <button className="kick-button" onClick={() => handleKick(p.uid)}>
@@ -215,10 +217,10 @@ export default function WaitingRoom() {
             </>
           ) : (
             <button
-              className={`ready-button ${currentUser?.state === "ready" ? "cancel" : "active"}`}
+              className={`ready-button ${currentUser?.ready == true ? "cancel" : "active"}`}
               onClick={toggleReady}
             >
-              {currentUser?.state === "ready" ? "준비 취소" : "준비하기"}
+              {currentUser?.ready == true ? "준비 취소" : "준비하기"}
             </button>
           )}
 
