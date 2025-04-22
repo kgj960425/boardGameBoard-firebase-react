@@ -1,7 +1,47 @@
-import {doc, setDoc, getDoc, updateDoc, collection, getDocs} from "firebase/firestore";
+import {doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, onSnapshot} from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 import {useGameEvents} from "../utils/useGameEvents.tsx";
 import {addGameEvent} from "../utils/addGameEvent.tsx";
+import {GameEventModel, RoomDoc} from "../models/ExplodingKittensModel.tsx";
+import {useEffect, useState} from "react";
+
+
+// 이벤트 로그 구독 훅
+export function useSubscribeToRoomEvents(roomId: string) {
+  const [events, setEvents] = useState<GameEventModel[]>([]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    const eventsCol = collection(db, "Rooms", roomId, "events");
+    const q = query(eventsCol, orderBy("createDttm", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setEvents(
+          snap.docs.map((d) => ({
+            id: d.id,
+            ...(d.data() as GameEventModel),
+          }))
+      );
+    });
+    return () => unsub();
+  }, [roomId]);
+
+  return events;
+}
+
+export function useSubscribeToRoomDoc(roomId: string) {
+  const [room, setRoom] = useState<RoomDoc>();
+
+  useEffect(() => {
+    if (!roomId) return;
+    const roomRef = doc(db, "Rooms", roomId);
+    const unsubscribe = onSnapshot(roomRef, (snap) => {
+      setRoom(snap.data() as RoomDoc);
+    });
+    return () => unsubscribe();
+  }, [roomId]);
+
+  return room;
+}
 
 type CardType =
     | "Favor"
@@ -9,6 +49,7 @@ type CardType =
     | "SeeFuture"
     | "Attack"
     | "Skip"
+    | "Nope"
     | "Defuse"
     | "Taco Cat"
     | "Hairy Potato Cat"
@@ -24,7 +65,7 @@ export const validateCardSubmission = (submission: CardSubmission): string | nul
   const { cards } = submission;
 
   // Nope 카드가 포함된 경우 검증 실패
-  if (cards.includes("Nope")) {
+  if (cards.includes("Nope" as unknown as CardType)) {
     return "Nope 카드는 일반 카드 제출로 사용할 수 없습니다."; // 오류 메시지 반환
   }
 
@@ -103,15 +144,15 @@ const generateFullDeck = (): string[] => [
 ];
 
 const shuffle = <T,>(array: T[]): T[] =>
-  array
-    .map(value => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
+    array
+        .map(value => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
 
 const getPlayerByTurn = (
-  turn: number,
-  turnOrder: string[],
-  deadPlayers: string[] = []
+    turn: number,
+    turnOrder: string[],
+    deadPlayers: string[] = []
 ) => {
   const alive = turnOrder.filter(uid => !deadPlayers.includes(uid));
   return alive[turn % alive.length];
@@ -139,7 +180,7 @@ const initializeGame = async (roomId: string) => {
     const defuseIdx = deck.findIndex(c => c === "Defuse");
     if (defuseIdx !== -1) hand.push(deck.splice(defuseIdx, 1)[0]);
     playerCards[uid] = {};
-    hand.forEach((c, i) => (playerCards[uid][`${i + 1}`] = c));
+    hand.forEach((c, i) => (playerCards[uid][${i + 1}] = c));
   }
 
   const remainingDefuses = deck.filter(c => c === "Defuse").slice(0, 2);
@@ -183,9 +224,9 @@ const initializeGame = async (roomId: string) => {
 };
 
 async function submitCard(
-  roomId: string,
-  selectedCards: string[],
-  gameData: any
+    roomId: string,
+    selectedCards: string[],
+    gameData: any
 ): Promise<Record<string, any> | null> {
   const uid = auth.currentUser?.uid;
   if (!uid) return null;
@@ -219,7 +260,7 @@ async function submitCard(
     discard: updatedDiscard,
   });
 
-  //모달 요청 처리 
+  //모달 요청 처리
   await triggerModalRequestIfNeeded(roomId, gameData, selectedCards);
 
   return {
@@ -232,13 +273,13 @@ async function getNextPlayer(playAttack = false) {
   // Attack 카드를 사용했다면 turnStack 누적
   if (playAttack) {
     turnStack += 1;
-    console.log(`Attack 사용됨. 누적된 턴: ${turnStack}`);
+    console.log(Attack 사용됨. 누적된 턴: ${turnStack});
     return; // 공격 사용 시 종료 (턴은 중단됨)
   }
 
   // 현재 공격 스택(turnStack)이 남아 있을 경우
   if (turnStack > 0) {
-    console.log(`현재 ${turnStack}개의 턴이 남아 있습니다.`);
+    console.log(현재 ${turnStack}개의 턴이 남아 있습니다.);
 
     // 카드 한 장 뽑기
     const drawn = drawCard();
@@ -261,7 +302,7 @@ async function getNextPlayer(playAttack = false) {
     if (turnStack === 0) {
       moveToNextPlayer();
     } else {
-      console.log(`플레이어가 추가로 ${turnStack}개의 턴을 수행해야 합니다.`);
+      console.log(플레이어가 추가로 ${turnStack}개의 턴을 수행해야 합니다.);
     }
   } else {
     // turnStack이 0일 경우 (기본 상태)
@@ -271,9 +312,9 @@ async function getNextPlayer(playAttack = false) {
 }
 
 async function drawCard(
-  roomId: string,
-  gameData: any,
-  onNeedInsertBomb: (deck: string[], updatedHand: Record<string, string>) => void
+    roomId: string,
+    gameData: any,
+    onNeedInsertBomb: (deck: string[], updatedHand: Record<string, string>) => void
 ): Promise<void> {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -298,16 +339,16 @@ async function drawCard(
       const updatedOrder = gameData.turnOrder.filter((x: string) => x !== uid);
 
       await endTurn(
-        roomId,
-        {
-          ...gameData,
-          deadPlayers: updatedDead,
-          turnOrder: updatedOrder,
-        },
-        gameData.playerCards,
-        deck,
-        [],
-        gameData.discardPile
+          roomId,
+          {
+            ...gameData,
+            deadPlayers: updatedDead,
+            turnOrder: updatedOrder,
+          },
+          gameData.playerCards,
+          deck,
+          [],
+          gameData.discardPile
       );
       return;
     }
@@ -318,24 +359,24 @@ async function drawCard(
   myHand[slot] = topCard;
 
   await endTurn(
-    roomId,
-    gameData,
-    {
-      ...gameData.playerCards,
-      [uid]: myHand,
-    },
-    deck,
-    [],
-    gameData.discardPile
+      roomId,
+      gameData,
+      {
+        ...gameData.playerCards,
+        [uid]: myHand,
+      },
+      deck,
+      [],
+      gameData.discardPile
   );
 }
 
 /// 모달 요청 처리
 /// - Favor: 상대에게 카드 요청
 async function triggerModalRequestIfNeeded(
-  roomId: string,
-  gameData: any,
-  selectedCards: string[]
+    roomId: string,
+    gameData: any,
+    selectedCards: string[]
 ) {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -416,11 +457,11 @@ async function triggerModalRequestIfNeeded(
 
 //폭탄 삽입 이벤트인건가?
 async function insertBombAt(
-  roomId: string,
-  nowData: any,
-  deck: string[],
-  updatedHand: Record<string, string>,
-  insertIndex: number
+    roomId: string,
+    nowData: any,
+    deck: string[],
+    updatedHand: Record<string, string>,
+    insertIndex: number
 ) {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -439,25 +480,25 @@ async function insertBombAt(
   });
 
   await endTurn(
-    roomId,
-    nowData,
-    {
-      ...nowData.playerCards,
-      [uid]: updatedHand,
-    },
-    newDeck,
-    [],
-    nowData.discardPile,
+      roomId,
+      nowData,
+      {
+        ...nowData.playerCards,
+        [uid]: updatedHand,
+      },
+      newDeck,
+      [],
+      nowData.discardPile,
   );
 }
 
 //이건 뭐지???
 async function handleFavorSelectedCard(
-  roomId: string,
-  fromUid: string,
-  toUid: string,
-  cardKey: string,
-  turn: any,
+    roomId: string,
+    fromUid: string,
+    toUid: string,
+    cardKey: string,
+    turn: any,
 ) {
   const ref = doc(db, "Rooms", roomId, "history", turn);
   console.log(ref);
@@ -485,10 +526,10 @@ async function handleFavorSelectedCard(
 
 ///이것도 뭐지
 async function handleRecoverCard(
-  roomId: string,
-  uid: string,
-  selectedCard: string,
-  gameData: any
+    roomId: string,
+    uid: string,
+    selectedCard: string,
+    gameData: any
 ) {
   const turnId = gameData.turn.toString().padStart(8, "0");
   const turnRef = doc(db, "Rooms", roomId, "history", turnId);
@@ -501,25 +542,25 @@ async function handleRecoverCard(
   updatedHand[Date.now().toString()] = selectedCard;
 
   await updateDoc(turnRef, {
-    [`playerCards.${uid}`]: updatedHand,
-    discardPile,
-    modalRequest: {
-      type: null,
-      from: null,
-      targets: [],
-      payload: {},
-      createdAt: null,
-    },
-  });
+    [playerCards.${uid}]: updatedHand,
+      discardPile,
+      modalRequest: {
+    type: null,
+        from: null,
+        targets: [],
+        payload: {},
+    createdAt: null,
+  },
+});
 }
 
 const endTurn = async (
-  roomId: string,
-  gameData: any,
-  updatedPlayerCards: Record<string, Record<string, string>>,
-  updatedDeck: string[],
-  discard: string[],
-  discardPile: string[],
+    roomId: string,
+    gameData: any,
+    updatedPlayerCards: Record<string, Record<string, string>>,
+    updatedDeck: string[],
+    discard: string[],
+    discardPile: string[],
 ) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -544,9 +585,9 @@ const endTurn = async (
 };
 
 const resolveCardEffect = async (
-  roomId: string,
-  gameData: any,
-  selectedCards: string[]
+    roomId: string,
+    gameData: any,
+    selectedCards: string[]
 ) => {
   const uid = auth.currentUser?.uid;
   if (!uid) return;

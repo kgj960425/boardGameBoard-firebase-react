@@ -14,7 +14,7 @@ interface PlayerInfo {
 }
 
 // 플레이어 정보 훅 (Rooms/{roomId}/player 서브컬렉션 실시간 조회)
-export const usePlayerInfo = (roomId: string | undefined) => {
+export const usePlayerInfo = (roomId: string) => {
   const [playerInfo, setPlayerInfo] = useState<Record<string, PlayerInfo>>({});
 
   useEffect(() => {

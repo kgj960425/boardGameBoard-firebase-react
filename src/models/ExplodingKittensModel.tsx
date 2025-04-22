@@ -53,3 +53,20 @@ export interface GameEventModel {
     createDttm: Timestamp;      // 이벤트 생성 시각
     deadline?: Timestamp;       // Nope 유예 등, 필요할 때만
 }
+
+export type RoomState = "waiting" | "playing" | "finished";
+
+export interface RoomDoc {
+    createUser: string;
+    createdDttm: Timestamp;
+    game: string;
+    host: string;
+    max: number;
+    min: number;
+    password: string;
+    passwordYn: boolean;
+    state: RoomState;
+    title: string;
+    updateDttm: Timestamp | null;
+    updateUser: string | null;
+}

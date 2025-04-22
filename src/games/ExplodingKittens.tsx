@@ -1,325 +1,181 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { auth } from "../firebase/firebase";
 
-import { db, auth } from "../firebase/firebase";
-import { collection, limit, onSnapshot, orderBy, query, Timestamp, where } from "firebase/firestore";
 import {
-  submitCard,
-  insertBombAt,
-  handleFavorSelectedCard,
-  handleRecoverCard,
-} from "./ExplodingKittensUtil";
+    useSubscribeToRoomDoc,
+    useSubscribeToRoomEvents,
+    submitCard,
+    handleRecoverCard,
+} from "./ExplodingKittensUtil.tsx";
 import "./ExplodingKittens.css";
+
 import useRoomMessages, { ChatMessage } from "../hooks/useRoomMessages";
 import useSendMessage from "../hooks/useSendMessage";
 import { usePlayerInfo } from "../hooks/usePlayerInfo";
-import FavorModal from "../components/FavorModal";
-import InsertBombModal from "../components/InsertBombModal";
 import RecoverFromDiscardModal from "../components/RecoverFromDiscardModal";
 
-
-interface GameData {
-  turn: number;
-  currentPlayer: string;
-  nextPlayer: string;
-  turnStart: Timestamp | null;
-  turnEnd: Timestamp | null;
-  playerCards: Record<string, Record<string, string>>;
-  deck: string[];
-  discardPile: string[];
-  discard: string[];
-  playedCard: string | null;
-  lastPlayedCard: string | null;
-  turnOrder: string[];
-  deadPlayers: string[];
-  turnStack: number;
-  remainingActions: number;
-  modalRequest: {
-    type: string,
-    targets: string[],
-    from: string,
-    payload: object,
-    createdAt: Timestamp
-  };
-  explosionEvent: {
-    player: string,
-    hasDefuse: false,
-  };
-}
-
 const ExplodingKittens = () => {
-  const { roomId } = useParams<{ roomId: string }>();
-  const [gameData, setGameData] = useState<GameData | null>(null);
-  const [input, setInput] = useState("");
-  const [selectedCard, setSelectedCard] = useState<string | null>(null);
-  const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
-  const [favorModalOpen, setFavorModalOpen] = useState(false);
-  const [RecoverFromDiscardModalOpen, setRecoverFromDiscardModalOpen] = useState(false);
-  const [favorTarget] = useState<string | null>(null);
-  const [insertBombModalOpen, setInsertBombModalOpen] = useState(false);
-  const [bombDeck] = useState<string[]>([]);
-  const [bombHand] = useState<Record<string, string>>({});
+    const { roomId } = useParams<{ roomId: string }>();
+    const myUid = auth.currentUser?.uid || "";
 
+    const roomDoc = useSubscribeToRoomDoc(roomId);
+    const events = useSubscribeToRoomEvents(roomId);
+    const playerInfo = usePlayerInfo(roomId);
+    const sendMessage = useSendMessage(roomId ?? null);
+    const messages: ChatMessage[] = useRoomMessages(roomId ?? null);
 
-  const resizingRef = useRef(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+    const [input, setInput] = useState("");
+    const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+    const [isRecoverOpen, setIsRecoverOpen] = useState(false);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-  const myUid = auth.currentUser?.uid;
-  const playerInfo = usePlayerInfo(roomId);
+    const {
+        turnOrder = [],
+        currentPlayer = "",
+        playerCards = {},
+        deck = [],
+        playedCard = null,
+        discardPile = [],
+        // 필요하다면 modalRequest, turn, nextPlayer 등도 꺼내세요
+    } = roomDoc as any;
 
-  if(!roomId) return null;
-  const sendMessage = useSendMessage(roomId);
-  const messages: ChatMessage[] = useRoomMessages(roomId);
+    const myHandEntries = Object.entries(playerCards[myUid] || []);
 
-  //game data onSnapshot
-  useEffect(() => {
-    if (!roomId) return;
-    const q = query(
-      collection(db, "Rooms", roomId, "history"),
-      where("turnEnd", "!=", null),
-      orderBy("turnEnd", "desc"),
-      limit(1)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      const docSnap = snapshot.docs[0];
-      if (docSnap?.exists()) {
-        setGameData(docSnap.data() as GameData);
-      }
-    });
-    return () => unsub();
-  }, [roomId]);
+    // 채팅 자동 스크롤
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
 
-  //chatting scroll fresh update
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    // (디버깅) roomDoc 과 events 확인
+    useEffect(() => {
+        console.log("🏠 roomDoc:", roomDoc);
+        console.log("📝 events:", events);
+    }, [roomDoc, events]);
 
-  function setSeeFutureModalOpen(_arg0: boolean) {
-    throw new Error("Function not implemented.");
-  }
-  function setChooseCardModalOpen(_arg0: boolean) {
-    throw new Error("Function not implemented.");
-  }
+    const handleCardClick = (key: string) =>
+        setSelectedKeys((prev) =>
+            prev.includes(key) ? [] : [key]
+        );
 
-
-  //modal open 이벤트
-  useEffect(() => {
-    if (!gameData || !myUid) return;
-
-    const { modalRequest, explosionEvent } = gameData;
-    
-    if(gameData?.modalRequest.targets?.includes(myUid)) {
-      switch (modalRequest.type) {
-        case "favor":
-          setFavorModalOpen(true);
-          break;
-        case "seeFuture":
-          setSeeFutureModalOpen(true);
-          break;
-        case "chooseCard":
-          setChooseCardModalOpen(true);
-          break;
-        case "recover-from-discard":
-          setRecoverFromDiscardModalOpen(true);
-          break;
-        default:
-          break;
-      }
-    }
-
-    if (explosionEvent?.player === myUid) {
-      if (explosionEvent.hasDefuse) {
-        // Defuse 카드 사용 로직
-      } else {
-        // 게임 탈락 처리 로직
-      }
-    }
-  }, [gameData?.modalRequest.targets?.includes(myUid ?? "")]);
-
-  const resizeChat = useCallback((e: MouseEvent) => {
-    if (!resizingRef.current) return;
-    const containerHeight = window.innerHeight;
-    const newHeightPx = containerHeight - e.clientY;
-    const newHeightPercent = (newHeightPx / containerHeight) * 100;
-    const clamped = Math.max(10, Math.min(newHeightPercent, 60));
-    const chat = document.querySelector('.playroom-chat-container') as HTMLElement;
-    if (chat) chat.style.height = `${clamped}%`;
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("mousemove", resizeChat);
-    window.addEventListener("mouseup", stopResizing);
-    return () => {
-      window.removeEventListener("mousemove", resizeChat);
-      window.removeEventListener("mouseup", stopResizing);
+    const handleCardSubmit = async () => {
+        if (!selectedKeys.length || !roomId) return;
+        const cards = selectedKeys.map((k) => playerCards[myUid][k]);
+        await submitCard(roomId, cards, roomDoc);
+        setSelectedKeys([]);
     };
-  }, [resizeChat]);
 
-  const handleCardClick = (card: string, cardKey: string) => {
-    if (!myUid || !gameData) return;
-    const powerlessCards = [
-      "Taco Cat",
-      "Hairy Potato Cat",
-      "Cattermelon",
-      "Beard Cat",
-      "Rainbow Ralphing Cat",
-    ];
-    const myHand = gameData.playerCards[myUid];
-    const sameCardEntries = Object.entries(myHand).filter(([_, v]) => v === card);
-    if (selectedCardKeys.includes(cardKey)) {
-      setSelectedCard(null);
-      setSelectedCardKeys([]);
-      return;
-    }
-    if (powerlessCards.includes(card)) {
-      const keysToSelect = sameCardEntries.slice(0, 3).map(([key]) => key);
-      setSelectedCard(card);
-      setSelectedCardKeys(keysToSelect);
-    } else {
-      setSelectedCard(card);
-      setSelectedCardKeys([cardKey]);
-    }
-  };
+    const handleSend = () => {
+        if (!input.trim()) return;
+        sendMessage(input);
+        setInput("");
+    };
 
-  const handleCardSubmit = async () => {
-    if (!roomId || !gameData || selectedCardKeys.length === 0 || !selectedCard) return;
-    await submitCard(
-      roomId,
-      selectedCardKeys.map(k => gameData.playerCards[myUid!][k]),
-      gameData,
-    );
-    setSelectedCard(null);
-    setSelectedCardKeys([]);
-  };
+    const openRecover = () => setIsRecoverOpen(true);
+    const closeRecover = () => setIsRecoverOpen(false);
+    const handleRecover = async (card: string) => {
+        await handleRecoverCard(roomId, myUid, card, roomDoc);
+        closeRecover();
+    };
 
-  const handleInsertBomb = async (index: number) => {
-    if(!roomId || !gameData) return;
-    await insertBombAt(roomId, gameData, bombDeck, bombHand, index);
-    setInsertBombModalOpen(false);
-  };
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-    sendMessage(input);
-    setInput("");
-  };
-
-  const startResizing = () => {
-    resizingRef.current = true;
-  };
-
-  const stopResizing = () => {
-    resizingRef.current = false;
-  };
-
-  const myCards = myUid ? Object.entries(gameData?.playerCards[myUid] || {}) : [];
-
-  if (!gameData || !roomId || !myUid) return;
-
-  return (
-    <div className="playroom-container">
-      <div className="playroom-player-bar" style={{ height: "15%" }}>
-        {gameData.turnOrder.map((uid) => {
-          const isCurrentTurn = gameData?.currentPlayer === uid;
-          const cardCount = Object.keys(gameData.playerCards?.[uid] ?? {}).length;
-          return (
-            <div key={uid} className="playroom-player-profile">
-              <img
-                src={playerInfo[uid]?.photoURL ?? "/default-profile.png"}
-                className={`player-photo ${isCurrentTurn ? "current-turn" : ""}`}
-                alt="profile"
-              />
-              <div className="playroom-player-info">{playerInfo[uid]?.nickname}</div>
-              <div className="playroom-player-info">{cardCount}장</div>
+    if (!roomId || !myUid || !roomDoc) return null;
+    return (
+        <div className="playroom-container">
+            {/* ▶ 플레이어 바 */}
+            <div className="playroom-player-bar">
+                {turnOrder.map((uid) => {
+                    const isCurrent = currentPlayer === uid;
+                    const count = Object.keys(playerCards[uid] || {}).length;
+                    return (
+                        <div
+                            key={uid}
+                            className={`playroom-player-profile ${
+                                isCurrent ? "current-turn" : ""
+                            }`}
+                        >
+                            <img
+                                src={playerInfo[uid]?.photoURL || "/default-profile.png"}
+                                alt="avatar"
+                                className="player-photo"
+                            />
+                            <div className="playroom-player-info">
+                                {playerInfo[uid]?.nickname || uid}
+                            </div>
+                            <div className="playroom-player-info">{count}장</div>
+                        </div>
+                    );
+                })}
             </div>
-          );
-        })}
-      </div>
 
-      <div className="playroom-center-zone" style={{ height: "30%", display: "flex", gap: "2rem", justifyContent: "center", alignItems: "center" }}>
-        <div className="playroom-card playroom-used-card">
-          {gameData.playedCard || ""}
-        </div>
-        <div className="playroom-card playroom-deck-card">
-          <div className="playroom-deck-count">{gameData.deck.length}</div>
-        </div>
-        {myUid === gameData.currentPlayer && (
-          <button onClick={handleCardSubmit}>
-            {selectedCardKeys.length === 0 ? "패스" : "카드 제출"}
-          </button>
-        )}
-      </div>
-
-      <div className="playroom-my-cards" style={{ height: "35%" }}>
-        {myUid && myCards.map(([key, card]) => (
-          <div
-            key={key}
-            className={`playroom-card ${selectedCardKeys.includes(key) ? "selected" : ""}`}
-            onClick={() => handleCardClick(card, key)}
-          >
-            {card}
-          </div>
-        ))}
-      </div>
-
-      <div className="playroom-chat-container" style={{ height: "20%" }}>
-        <div className="playroom-chat-resizer" onMouseDown={startResizing}></div>
-        <div className="playroom-chat-box">
-          <div className="playroom-chat-messages">
-            {messages.map((msg, i) => {
-              const isMine = msg.uid === myUid;
-              return (
-                <div key={i} className={`chat-message ${isMine ? "mine" : "other"}`}>
-                  {!isMine && <div className="chat-nickname">{msg.nickname}</div>}
-                  <div className={`chat-bubble ${isMine ? "mine" : "other"}`}>{msg.content}</div>
+            {/* ▶ 중앙: 사용 카드 · 덱 · 제출 버튼 */}
+            <div className="playroom-center-zone">
+                <div className="playroom-card playroom-used-card">
+                    {playedCard || "-"}
                 </div>
-              );
-            })}
-            <div ref={scrollRef} />
-          </div>
-          <div className="playroom-chat-input">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
-              placeholder="메시지를 입력하세요"
+                <div className="playroom-card playroom-deck-card">
+                    <span className="playroom-deck-count">{deck.length}</span>
+                </div>
+                {myUid === currentPlayer && (
+                    <button onClick={handleCardSubmit}>
+                        {selectedKeys.length ? "카드 제출" : "패스"}
+                    </button>
+                )}
+            </div>
+
+            {/* ▶ 내 패 */}
+            <div className="playroom-my-cards">
+                {myHandEntries.map(([key, card]) => (
+                    <div
+                        key={key}
+                        className={`playroom-card ${
+                            selectedKeys.includes(key) ? "selected" : ""
+                        }`}
+                        onClick={() => handleCardClick(key)}
+                    >
+                        {card}
+                    </div>
+                ))}
+            </div>
+
+            {/* ▶ 채팅 */}
+            <div className="playroom-chat-container">
+                <div className="playroom-chat-messages">
+                    {messages.map((m, i) => {
+                        const isMine = m.uid === myUid;
+                        return (
+                            <div
+                                key={i}
+                                className={`chat-message ${isMine ? "mine" : "other"}`}
+                            >
+                                {!isMine && (
+                                    <div className="chat-nickname">{m.nickname}</div>
+                                )}
+                                <div className="chat-bubble">{m.content}</div>
+                            </div>
+                        );
+                    })}
+                    <div ref={scrollRef} />
+                </div>
+                <div className="playroom-chat-input">
+                    <input
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                        placeholder="메시지를 입력하세요"
+                    />
+                    <button onClick={handleSend}>전송</button>
+                </div>
+            </div>
+
+            {/* ▶ Recover 모달 */}
+            <RecoverFromDiscardModal
+                isOpen={isRecoverOpen}
+                discardPile={discardPile}
+                onSelect={handleRecover}
+                onClose={closeRecover}
             />
-            <button onClick={handleSend}>전송</button>
-          </div>
         </div>
-      </div>
-
-      <FavorModal
-        isOpen={favorModalOpen}
-        hand={gameData?.playerCards[myUid!] || {}}
-        onCardSelect={async (key) => {
-          if (favorTarget && roomId && myUid) {
-            await handleFavorSelectedCard(roomId, myUid, favorTarget, key, gameData.turn);
-          }
-        }}
-        onClose={() => setFavorModalOpen(false)}
-      />
-
-
-      <InsertBombModal
-        isOpen={insertBombModalOpen}
-        deck={bombDeck}
-        onSelect={handleInsertBomb}
-      />
-
-      <RecoverFromDiscardModal
-        isOpen={RecoverFromDiscardModalOpen}
-        discardPile={gameData.discardPile}
-        onSelect={async (card) => {
-          if (!roomId || !myUid || !gameData) return;
-          await handleRecoverCard(roomId, myUid, card, gameData);
-          setRecoverFromDiscardModalOpen(false);
-        }}
-        onClose={() => setRecoverFromDiscardModalOpen(false)}
-      />
-
-    </div>
-  );
+    );
 };
 
 export default ExplodingKittens;
