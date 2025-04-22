@@ -10,21 +10,20 @@ import {
   handleRecoverCard,
 } from "./ExplodingKittensUtil";
 import "./ExplodingKittens.css";
-
 import useRoomMessages, { ChatMessage } from "../hooks/useRoomMessages";
 import useSendMessage from "../hooks/useSendMessage";
 import { usePlayerInfo } from "../hooks/usePlayerInfo";
-import FavorModal from "../components/FavorModal"; // Update this path if the file is located elsewhere
+import FavorModal from "../components/FavorModal";
 import InsertBombModal from "../components/InsertBombModal";
-import RecoverFromDiscardModal from "../components/RecoverFromDiscardModal"; // Update this path if the file is located elsewhere
+import RecoverFromDiscardModal from "../components/RecoverFromDiscardModal";
 
 
 interface GameData {
   turn: number;
   currentPlayer: string;
   nextPlayer: string;
-  turnStart: any;
-  turnEnd: any;
+  turnStart: Timestamp | null;
+  turnEnd: Timestamp | null;
   playerCards: Record<string, Record<string, string>>;
   deck: string[];
   discardPile: string[];
@@ -39,7 +38,7 @@ interface GameData {
     type: string,
     targets: string[],
     from: string,
-    payload: {},
+    payload: object,
     createdAt: Timestamp
   };
   explosionEvent: {
@@ -58,14 +57,14 @@ const ExplodingKittens = () => {
   const [RecoverFromDiscardModalOpen, setRecoverFromDiscardModalOpen] = useState(false);
   const [favorTarget] = useState<string | null>(null);
   const [insertBombModalOpen, setInsertBombModalOpen] = useState(false);
-  const [bombDeck, setBombDeck] = useState<string[]>([]);
-  const [bombHand, setBombHand] = useState<Record<string, string>>({});
+  const [bombDeck] = useState<string[]>([]);
+  const [bombHand] = useState<Record<string, string>>({});
+
 
   const resizingRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const myUid = auth.currentUser?.uid;
-  // const isMyTurn = myUid === gameData?.currentPlayer;
   const playerInfo = usePlayerInfo(roomId);
 
   if(!roomId) return null;
@@ -101,7 +100,8 @@ const ExplodingKittens = () => {
   function setChooseCardModalOpen(_arg0: boolean) {
     throw new Error("Function not implemented.");
   }
-  
+
+
   //modal open 이벤트
   useEffect(() => {
     if (!gameData || !myUid) return;
@@ -220,12 +220,13 @@ const ExplodingKittens = () => {
     <div className="playroom-container">
       <div className="playroom-player-bar" style={{ height: "15%" }}>
         {gameData.turnOrder.map((uid) => {
+          const isCurrentTurn = gameData?.currentPlayer === uid;
           const cardCount = Object.keys(gameData.playerCards?.[uid] ?? {}).length;
           return (
             <div key={uid} className="playroom-player-profile">
               <img
                 src={playerInfo[uid]?.photoURL ?? "/default-profile.png"}
-                className="playroom-player-photo"
+                className={`player-photo ${isCurrentTurn ? "current-turn" : ""}`}
                 alt="profile"
               />
               <div className="playroom-player-info">{playerInfo[uid]?.nickname}</div>

@@ -156,3 +156,18 @@
   color: #666;
   margin-bottom: 0.25rem;
 }
+
+  /* 기본 프로필 스타일 */
+  .player-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  /* 현재 턴인 플레이어 추가 효과 */
+  .player-photo.current-turn {
+    border-color: #ffd700; /* 금색 테두리 */
+    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.8); /* 빛나는 효과 */
+  }

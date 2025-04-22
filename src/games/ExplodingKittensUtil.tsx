@@ -1,5 +1,90 @@
 import {doc, setDoc, getDoc, updateDoc, collection, getDocs} from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
+import {useGameEvents} from "../utils/useGameEvents.tsx";
+import {addGameEvent} from "../utils/addGameEvent.tsx";
+
+type CardType =
+    | "Favor"
+    | "Shuffle"
+    | "SeeFuture"
+    | "Attack"
+    | "Skip"
+    | "Defuse"
+    | "Taco Cat"
+    | "Hairy Potato Cat"
+    | "Rainbow Ralphing Cat"
+    | "Cattermelon"
+    | "Beard Cat";
+
+interface CardSubmission {
+  cards: CardType[]; // 제출된 카드 배열
+}
+
+export const validateCardSubmission = (submission: CardSubmission): string | null => {
+  const { cards } = submission;
+
+  // Nope 카드가 포함된 경우 검증 실패
+  if (cards.includes("Nope")) {
+    return "Nope 카드는 일반 카드 제출로 사용할 수 없습니다."; // 오류 메시지 반환
+  }
+
+  // 카드 타입별 개수 계산
+  const cardCounts: Record<CardType, number> = cards.reduce((acc, card) => {
+    acc[card] = acc[card] ? acc[card] + 1 : 1;
+    return acc;
+  }, {} as Record<CardType, number>);
+
+  // 함수: 규칙 체크 헬퍼
+  const isSingleCard = (card: CardType) => cardCounts[card] === 1;
+
+  const countCardTypes = () => Object.keys(cardCounts).length;
+
+  const isTwoOfSameType = () => Object.values(cardCounts).some((count) => count === 2);
+
+  const isThreeOfSameType = () => Object.values(cardCounts).some((count) => count === 3);
+
+  const isFiveUniqueTypes = () => countCardTypes() === 5 && cards.length === 5;
+
+  // 검증 로직
+  if (cards.length === 1) {
+    // 단일 카드 제출 규칙
+    const singleCardTypes: CardType[] = [
+      "Favor",
+      "Shuffle",
+      "SeeFuture",
+      "Attack",
+      "Skip",
+      "Nope",
+      "Defuse",
+      "Taco Cat",
+      "Hairy Potato Cat",
+      "Rainbow Ralphing Cat",
+      "Cattermelon",
+      "Beard Cat",
+    ];
+
+    if (singleCardTypes.includes(cards[0])) return null; // 유효한 단일 카드
+    return "잘못된 단일 카드 제출입니다.";
+  }
+
+  if (cards.length === 2 && isTwoOfSameType()) {
+    // 동일한 카드 2장 규칙
+    return null;
+  }
+
+  if (cards.length === 3 && isThreeOfSameType()) {
+    // 동일한 카드 3장 규칙
+    return null;
+  }
+
+  if (isFiveUniqueTypes()) {
+    // 서로 다른 5종 카드 규칙
+    return null;
+  }
+
+  return "제출된 카드가 규칙에 맞지 않습니다.";
+};
+
 
 const generateFullDeck = (): string[] => [
   ...Array(4).fill("Attack"),
@@ -68,7 +153,7 @@ const initializeGame = async (roomId: string) => {
   const gameData = {
     turn: 1,
     turnStart: new Date(),
-    turnEnd: null,
+    turnEnd: new Date(),
     currentPlayer: turnOrder[0],
     nextPlayer: turnOrder[1] ?? null,
     playerCards,
@@ -143,6 +228,47 @@ async function submitCard(
   };
 }
 
+async function getNextPlayer(playAttack = false) {
+  // Attack 카드를 사용했다면 turnStack 누적
+  if (playAttack) {
+    turnStack += 1;
+    console.log(`Attack 사용됨. 누적된 턴: ${turnStack}`);
+    return; // 공격 사용 시 종료 (턴은 중단됨)
+  }
+
+  // 현재 공격 스택(turnStack)이 남아 있을 경우
+  if (turnStack > 0) {
+    console.log(`현재 ${turnStack}개의 턴이 남아 있습니다.`);
+
+    // 카드 한 장 뽑기
+    const drawn = drawCard();
+
+    // 카드가 Exploding Kitten일 경우
+    if (drawn === "Exploding Kitten") {
+      if (!hasDefuse()) {
+        eliminatePlayer(); // 플레이어 제거
+        // 게임이 끝났는지, 또는 다른 검증 로직 추가 가능
+        return;
+      } else {
+        autoUseDefuse(); // 자동으로 Defuse 카드 사용
+      }
+    }
+
+    // 현재 플레이어의 남은 턴을 소모
+    turnStack -= 1;
+
+    // 모든 턴 소진 시 다른 플레이어에게 턴을 넘김
+    if (turnStack === 0) {
+      moveToNextPlayer();
+    } else {
+      console.log(`플레이어가 추가로 ${turnStack}개의 턴을 수행해야 합니다.`);
+    }
+  } else {
+    // turnStack이 0일 경우 (기본 상태)
+    console.log("턴 스택 없음, 다음 플레이어로 바로 이동.");
+    moveToNextPlayer();
+  }
+}
 
 async function drawCard(
   roomId: string,
@@ -288,7 +414,7 @@ async function triggerModalRequestIfNeeded(
   }
 }
 
-
+//폭탄 삽입 이벤트인건가?
 async function insertBombAt(
   roomId: string,
   nowData: any,
@@ -325,7 +451,7 @@ async function insertBombAt(
   );
 }
 
-
+//이건 뭐지???
 async function handleFavorSelectedCard(
   roomId: string,
   fromUid: string,
@@ -357,6 +483,7 @@ async function handleFavorSelectedCard(
   });
 }
 
+///이것도 뭐지
 async function handleRecoverCard(
   roomId: string,
   uid: string,
@@ -512,8 +639,23 @@ const resolveCardEffect = async (
   }
 };
 
+export const handleNopeEvent = async (roomId: string, from: string, to: string | null = null) => {
+  const payload = {}; // nope 이벤트에는 추가 데이터가 필요하지 않을 수 있음
+  await addGameEvent(roomId, "nope", payload, from, to);
+};
+
+export const handleRecoverFromDiscard = async (
+    roomId: string,
+    from: string,
+    chosenCard: string
+) => {
+  const payload = { card: chosenCard };
+  await addGameEvent(roomId, "recover-from-discard", payload, from);
+};
 
 export {
+  useGameEvents,
+  addGameEvent,
   generateFullDeck,
   shuffle,
   getPlayerByTurn,
