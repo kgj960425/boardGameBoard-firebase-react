@@ -9,7 +9,6 @@ export interface ChatMessage {
   createTime: Date;
 }
 
-// ✅ default export 붙이기
 export default function useRoomMessages(messageCollectionId: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
