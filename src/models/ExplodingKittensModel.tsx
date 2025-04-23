@@ -45,7 +45,7 @@ type CardType =
     | "Beard Cat";
 
 export interface GameEventModel {
-    eventId: string;            // 문서 ID (예: '00000005')
+    turn: string;              // history의 턴 (예: '00000005')
     actionType: CardType;      // ex: 'submit-card'
     actorUid: string;           // 이벤트 발생자 UID
     to?: string;                // 대상 UID (없으면 undefined)

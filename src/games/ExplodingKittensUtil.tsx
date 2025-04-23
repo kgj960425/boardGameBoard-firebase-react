@@ -1,8 +1,19 @@
-import {doc, setDoc, getDoc, updateDoc, collection, getDocs, query, orderBy, onSnapshot} from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  onSnapshot,
+  runTransaction, Timestamp
+} from "firebase/firestore";
 import { auth, db } from "../firebase/firebase";
 import {useGameEvents} from "../utils/useGameEvents.tsx";
 import {addGameEvent} from "../utils/addGameEvent.tsx";
-import {GameEventModel, RoomDoc} from "../models/ExplodingKittensModel.tsx";
+import {GameEventModel, RoomDoc, historyModel} from "../models/ExplodingKittensModel.tsx";
 import {useEffect, useState} from "react";
 
 
@@ -41,6 +52,21 @@ export function useSubscribeToRoomDoc(roomId: string) {
   }, [roomId]);
 
   return room;
+}
+
+export function useSubscribeToRoomHistory(roomId: string) {
+  const [history, setHistory] = useState<historyModel>();
+
+  useEffect(() => {
+    if (!roomId) return;
+    const historyDoc = doc(db, "Rooms", roomId, "history", "00000000");
+    const unsub = onSnapshot(historyDoc, (snap) => {
+      setHistory(snap.data() as historyModel);
+    });
+    return () => unsub();
+  }, [roomId]);
+
+  return history;
 }
 
 type CardType =
@@ -159,77 +185,100 @@ const getPlayerByTurn = (
 };
 
 const initializeGame = async (roomId: string) => {
-  const historyDocRef = doc(db, "Rooms", roomId, "history", "00000000");
-  const playerCollectionRef = collection(db, "Rooms", roomId, "player");
+  const playerSnap = await getDocs(collection(db, "Rooms", roomId, "player"));
+  const players = playerSnap.docs.map((d) => d.id);
 
-  const playerSnapshots = await getDocs(playerCollectionRef);
-  const players = playerSnapshots.docs.map((doc) => doc.id);
-  if (players.length === 0) return;
-
+  //게임 순서 셋팅
   const turnOrder = shuffle(players);
-  const deck = shuffle(generateFullDeck());
+  //덱 셋팅
+  let deck = shuffle(generateFullDeck());
 
+  //
   const playerCards: Record<string, Record<string, string>> = {};
+
   for (const uid of players) {
     const hand: string[] = [];
+    // 7장 뽑기 (폭탄·디퓨즈 제외)
     while (hand.length < 7) {
-      const card = deck.shift();
-      if (card && !["Defuse", "Exploding Kitten"].includes(card)) hand.push(card);
-      else deck.push(card!);
+      const c = deck.shift()!;
+      if (c !== "Defuse" && c !== "Exploding Kitten") hand.push(c);
+      else deck.push(c);
     }
-    const defuseIdx = deck.findIndex(c => c === "Defuse");
-    if (defuseIdx !== -1) hand.push(deck.splice(defuseIdx, 1)[0]);
+    // 디퓨즈 1장 반드시 포함
+    const defIdx = deck.findIndex((c) => c === "Defuse");
+    if (defIdx >= 0) hand.push(deck.splice(defIdx, 1)[0]);
+
+    // slot 번호 매핑
     playerCards[uid] = {};
-    hand.forEach((c, i) => (playerCards[uid][${i + 1}] = c));
+    hand.forEach((c, i) => {
+      playerCards[uid][String(i + 1)] = c;
+    });
   }
 
-  const remainingDefuses = deck.filter(c => c === "Defuse").slice(0, 2);
-  const kittens = deck.filter(c => c === "Exploding Kitten").slice(0, players.length - 1);
-  const finalDeck = shuffle([
-    ...deck.filter(c => !["Defuse", "Exploding Kitten"].includes(c)),
-    ...remainingDefuses,
+  // 남은 카드 + 폭탄 섞기
+  const defuses = deck.filter((c) => c === "Defuse").slice(0, 2);
+  const kittens = deck
+      .filter((c) => c === "Exploding Kitten")
+      .slice(0, players.length - 1);
+  deck = shuffle([
+    ...deck.filter((c) => c !== "Defuse" && c !== "Exploding Kitten"),
+    ...defuses,
     ...kittens,
   ]);
 
-  const gameData = {
+  const baseData = {
     turn: 1,
-    turnStart: new Date(),
-    turnEnd: new Date(),
-    currentPlayer: turnOrder[0],
-    nextPlayer: turnOrder[1] ?? null,
+    turnStart: Timestamp.now(),
+    turnEnd: Timestamp.now(),
+    currentPlayer: "INITIALIZE",
+    turnOrder,
     playerCards,
-    deck: finalDeck,
+    deck,
     discardPile: [],
     discard: [],
-    playedCard: null,
     lastPlayedCard: null,
     turnStack: 0,
-    remainingActions: 1,
     deadPlayers: [],
-    turnOrder,
-    modalRequest: {
-      type: null,
-      targets: [],
-      from: null,
-      payload: {},
-      createdAt: new Date(),
-    },
-    explosionEvent: {
-      player: null,
-      hasDefuse: null,
-    },
+    modalRequest: null,
+    explosionEvent: null,
   };
 
-  await setDoc(historyDocRef, gameData);
+  const eventMeta = {
+    eventId: "00000001",
+    actionType: "INITIALIZE" as const,
+    actorUid: "SYSTEM",
+    timestamp: Timestamp.now(),
+  };
+
+  const firstEvent = {
+    ...baseData,
+    ...eventMeta,
+  };
+
+  // 3) 트랜잭션으로 동시에 쓰기
+  await runTransaction(db, async (tx) => {
+    const histPath = `Rooms/${roomId}/history`;
+    const snapRef = doc(db, histPath, "00000000");
+    const firstRef = doc(db, histPath, "00000001");
+
+    // 첫 이벤트(로그) 저장
+    tx.set(firstRef, firstEvent);
+    // 최신 상태 스냅샷 덮어쓰기
+    tx.set(snapRef, firstEvent);
+  });
 };
 
 async function submitCard(
     roomId: string,
     selectedCards: string[],
-    gameData: any
-): Promise<Record<string, any> | null> {
+    gameData: historyModel
+){
   const uid = auth.currentUser?.uid;
   if (!uid) return null;
+
+  if (selectedCards.length === 0) {
+    return passTurn(roomId, gameData);
+  }
 
   //핸드 인증
   const myHand: Record<string, string> = { ...gameData.playerCards[uid] };
@@ -249,8 +298,7 @@ async function submitCard(
   }
 
   const updatedDiscard = [...(gameData.discard ?? []), ...selectedCards];
-  const currentTurnId = gameData.turn.toString().padStart(8, "0");
-  const currentTurnRef = doc(db, "Rooms", roomId, "history", currentTurnId);
+  const currentTurnRef = doc(db, "Rooms", roomId, "history", "00000000");
 
   await updateDoc(currentTurnRef, {
     playerCards: {
@@ -269,46 +317,35 @@ async function submitCard(
   };
 }
 
-async function getNextPlayer(playAttack = false) {
-  // Attack 카드를 사용했다면 turnStack 누적
-  if (playAttack) {
-    turnStack += 1;
-    console.log(Attack 사용됨. 누적된 턴: ${turnStack});
-    return; // 공격 사용 시 종료 (턴은 중단됨)
+export async function passTurn(
+    roomId: string,
+    gameData: historyModel
+): Promise<{ drawnCard?: string; updatedHand: Record<string, string> }> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("No auth");
+
+  // 1) 덱에서 한 장 드로우
+  const newDeck = [...gameData.deck];
+  const drawn = newDeck.shift();
+
+  // 2) 내 핸드에 추가
+  const newHand = { ...gameData.playerCards[uid] };
+  if (drawn) {
+    newHand[Date.now().toString()] = drawn;
   }
 
-  // 현재 공격 스택(turnStack)이 남아 있을 경우
-  if (turnStack > 0) {
-    console.log(현재 ${turnStack}개의 턴이 남아 있습니다.);
+  // 3) 다음 턴으로 넘어가기 (endTurn 유틸 사용)
+  //    endTurn(roomId, gameData, updatedPlayerCards, updatedDeck, discard, discardPile)
+  await endTurn(
+      roomId,
+      gameData,
+      { ...gameData.playerCards, [uid]: newHand },
+      newDeck,
+      [],                   // 새로 쌓는 discard는 없음
+      gameData.discardPile  // 기존 discardPile 유지
+  );
 
-    // 카드 한 장 뽑기
-    const drawn = drawCard();
-
-    // 카드가 Exploding Kitten일 경우
-    if (drawn === "Exploding Kitten") {
-      if (!hasDefuse()) {
-        eliminatePlayer(); // 플레이어 제거
-        // 게임이 끝났는지, 또는 다른 검증 로직 추가 가능
-        return;
-      } else {
-        autoUseDefuse(); // 자동으로 Defuse 카드 사용
-      }
-    }
-
-    // 현재 플레이어의 남은 턴을 소모
-    turnStack -= 1;
-
-    // 모든 턴 소진 시 다른 플레이어에게 턴을 넘김
-    if (turnStack === 0) {
-      moveToNextPlayer();
-    } else {
-      console.log(플레이어가 추가로 ${turnStack}개의 턴을 수행해야 합니다.);
-    }
-  } else {
-    // turnStack이 0일 경우 (기본 상태)
-    console.log("턴 스택 없음, 다음 플레이어로 바로 이동.");
-    moveToNextPlayer();
-  }
+  return { drawnCard: drawn, updatedHand: newHand };
 }
 
 async function drawCard(
@@ -524,36 +561,6 @@ async function handleFavorSelectedCard(
   });
 }
 
-///이것도 뭐지
-async function handleRecoverCard(
-    roomId: string,
-    uid: string,
-    selectedCard: string,
-    gameData: any
-) {
-  const turnId = gameData.turn.toString().padStart(8, "0");
-  const turnRef = doc(db, "Rooms", roomId, "history", turnId);
-
-  const discardPile = [...gameData.discardPile];
-  const cardIndex = discardPile.indexOf(selectedCard);
-  if (cardIndex !== -1) discardPile.splice(cardIndex, 1);
-
-  const updatedHand = { ...gameData.playerCards[uid] };
-  updatedHand[Date.now().toString()] = selectedCard;
-
-  await updateDoc(turnRef, {
-    [playerCards.${uid}]: updatedHand,
-      discardPile,
-      modalRequest: {
-    type: null,
-        from: null,
-        targets: [],
-        payload: {},
-    createdAt: null,
-  },
-});
-}
-
 const endTurn = async (
     roomId: string,
     gameData: any,
@@ -694,6 +701,33 @@ export const handleRecoverFromDiscard = async (
   await addGameEvent(roomId, "recover-from-discard", payload, from);
 };
 
+export async function consumeTurnAndAdvancePlayer(
+    roomId: string,
+    gameState: historyModel
+): Promise<void> {
+  const { turnStack, currentPlayer, turnOrder, turn } = gameState;
+
+  // 1턴 소모
+  const newTurnStack = turnStack - 1;
+
+  // 다음 플레이어 결정
+  let newCurrentPlayer = currentPlayer;
+  if (newTurnStack < 1) {
+    const idx = turnOrder.indexOf(currentPlayer);
+    // 다음 인덱스(마지막이면 처음으로)
+    const nextIdx = (idx + 1) % turnOrder.length;
+    newCurrentPlayer = turnOrder[nextIdx];
+  }
+
+  // Firestore 에 반영
+  const turnId = String(turn).padStart(8, "0");
+  const turnRef = doc(db, "Rooms", roomId, "history", turnId);
+  await updateDoc(turnRef, {
+    turnStack: newTurnStack,
+    currentPlayer: newCurrentPlayer,
+  });
+}
+
 export {
   useGameEvents,
   addGameEvent,
@@ -705,6 +739,5 @@ export {
   drawCard,
   endTurn,
   insertBombAt,
-  handleRecoverCard,
   handleFavorSelectedCard,
 };

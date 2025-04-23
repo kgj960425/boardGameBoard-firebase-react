@@ -1,57 +1,40 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { auth } from "../firebase/firebase";
 
 import {
     useSubscribeToRoomDoc,
     useSubscribeToRoomEvents,
+    useSubscribeToRoomHistory,
     submitCard,
-    handleRecoverCard,
 } from "./ExplodingKittensUtil.tsx";
 import "./ExplodingKittens.css";
 
 import useRoomMessages, { ChatMessage } from "../hooks/useRoomMessages";
 import useSendMessage from "../hooks/useSendMessage";
 import { usePlayerInfo } from "../hooks/usePlayerInfo";
-import RecoverFromDiscardModal from "../components/RecoverFromDiscardModal";
 
 const ExplodingKittens = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const myUid = auth.currentUser?.uid || "";
 
-    const roomDoc = useSubscribeToRoomDoc(roomId);
-    const events = useSubscribeToRoomEvents(roomId);
-    const playerInfo = usePlayerInfo(roomId);
+    const roomDoc = useSubscribeToRoomDoc(roomId ?? "");
+    const events = useSubscribeToRoomEvents(roomId ?? "");
+    const now = useSubscribeToRoomHistory(roomId ?? "");
+    const playerInfo = usePlayerInfo(roomId ?? "");
     const sendMessage = useSendMessage(roomId ?? null);
     const messages: ChatMessage[] = useRoomMessages(roomId ?? null);
 
     const [input, setInput] = useState("");
     const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-    const [isRecoverOpen, setIsRecoverOpen] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    const {
-        turnOrder = [],
-        currentPlayer = "",
-        playerCards = {},
-        deck = [],
-        playedCard = null,
-        discardPile = [],
-        // 필요하다면 modalRequest, turn, nextPlayer 등도 꺼내세요
-    } = roomDoc as any;
-
-    const myHandEntries = Object.entries(playerCards[myUid] || []);
+    const myHandEntries = Object.entries(now?.playerCards[myUid] || []);
 
     // 채팅 자동 스크롤
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
-
-    // (디버깅) roomDoc 과 events 확인
-    useEffect(() => {
-        console.log("🏠 roomDoc:", roomDoc);
-        console.log("📝 events:", events);
-    }, [roomDoc, events]);
 
     const handleCardClick = (key: string) =>
         setSelectedKeys((prev) =>
@@ -59,9 +42,15 @@ const ExplodingKittens = () => {
         );
 
     const handleCardSubmit = async () => {
-        if (!selectedKeys.length || !roomId) return;
-        const cards = selectedKeys.map((k) => playerCards[myUid][k]);
-        await submitCard(roomId, cards, roomDoc);
+        if (!roomId || !now) return;
+        let cards: string[] = [];
+        console.log("제출하려는 카드 : ", selectedKeys);
+        if (selectedKeys.length > 0) {
+            cards = selectedKeys
+                .map((k) => now?.playerCards[myUid][k])
+                .filter((card): card is string => card !== undefined);
+        }
+        await submitCard(roomId, cards, now);
         setSelectedKeys([]);
     };
 
@@ -71,21 +60,14 @@ const ExplodingKittens = () => {
         setInput("");
     };
 
-    const openRecover = () => setIsRecoverOpen(true);
-    const closeRecover = () => setIsRecoverOpen(false);
-    const handleRecover = async (card: string) => {
-        await handleRecoverCard(roomId, myUid, card, roomDoc);
-        closeRecover();
-    };
-
     if (!roomId || !myUid || !roomDoc) return null;
     return (
         <div className="playroom-container">
             {/* ▶ 플레이어 바 */}
             <div className="playroom-player-bar">
-                {turnOrder.map((uid) => {
-                    const isCurrent = currentPlayer === uid;
-                    const count = Object.keys(playerCards[uid] || {}).length;
+                {now?.turnOrder?.map((uid : string) => {
+                    const isCurrent = now.currentPlayer === uid;
+                    const count = Object.keys(now.playerCards[uid] || {}).length;
                     return (
                         <div
                             key={uid}
@@ -96,7 +78,9 @@ const ExplodingKittens = () => {
                             <img
                                 src={playerInfo[uid]?.photoURL || "/default-profile.png"}
                                 alt="avatar"
-                                className="player-photo"
+                                className={`player-photo ${
+                                    isCurrent ? "current-turn" : ""
+                                }`}
                             />
                             <div className="playroom-player-info">
                                 {playerInfo[uid]?.nickname || uid}
@@ -110,14 +94,18 @@ const ExplodingKittens = () => {
             {/* ▶ 중앙: 사용 카드 · 덱 · 제출 버튼 */}
             <div className="playroom-center-zone">
                 <div className="playroom-card playroom-used-card">
-                    {playedCard || "-"}
+                    {now?.playedCard || "-"}
                 </div>
                 <div className="playroom-card playroom-deck-card">
-                    <span className="playroom-deck-count">{deck.length}</span>
+                    <span className="playroom-deck-count">{now?.deck.length}</span>
                 </div>
-                {myUid === currentPlayer && (
+                {myUid === now?.currentPlayer ? (
                     <button onClick={handleCardSubmit}>
                         {selectedKeys.length ? "카드 제출" : "패스"}
+                    </button>
+                ) : (
+                    <button>
+                        Nope!
                     </button>
                 )}
             </div>
@@ -132,7 +120,7 @@ const ExplodingKittens = () => {
                         }`}
                         onClick={() => handleCardClick(key)}
                     >
-                        {card}
+                        {String(card)}
                     </div>
                 ))}
             </div>
@@ -150,7 +138,7 @@ const ExplodingKittens = () => {
                                 {!isMine && (
                                     <div className="chat-nickname">{m.nickname}</div>
                                 )}
-                                <div className="chat-bubble">{m.content}</div>
+                                <div className={`chat-bubble ${isMine ? "mine" : "other"}`}>{m.content}</div>
                             </div>
                         );
                     })}
@@ -166,14 +154,6 @@ const ExplodingKittens = () => {
                     <button onClick={handleSend}>전송</button>
                 </div>
             </div>
-
-            {/* ▶ Recover 모달 */}
-            <RecoverFromDiscardModal
-                isOpen={isRecoverOpen}
-                discardPile={discardPile}
-                onSelect={handleRecover}
-                onClose={closeRecover}
-            />
         </div>
     );
 };
