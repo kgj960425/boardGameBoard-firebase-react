@@ -230,7 +230,7 @@ const initializeGame = async (roomId: string) => {
     turn: 1,
     turnStart: Timestamp.now(),
     turnEnd: Timestamp.now(),
-    currentPlayer: "INITIALIZE",
+    currentPlayer: players[0],
     turnOrder,
     playerCards,
     deck,
@@ -243,7 +243,7 @@ const initializeGame = async (roomId: string) => {
     explosionEvent: null,
   };
 
-  const eventMeta = {
+  const eventMeta = { //아니 이건 이벤트에 저장되어야지...
     eventId: "00000001",
     actionType: "INITIALIZE" as const,
     actorUid: "SYSTEM",
@@ -263,6 +263,10 @@ const initializeGame = async (roomId: string) => {
 
     // 첫 이벤트(로그) 저장
     tx.set(firstRef, firstEvent);
+
+
+
+
     // 최신 상태 스냅샷 덮어쓰기
     tx.set(snapRef, firstEvent);
   });
@@ -561,23 +565,20 @@ async function handleFavorSelectedCard(
   });
 }
 
-const endTurn = async (
-    roomId: string,
-    gameData: any,
-    updatedPlayerCards: Record<string, Record<string, string>>,
-    updatedDeck: string[],
-    discard: string[],
-    discardPile: string[],
-) => {
+const endTurn = async (roomId: string) => {
+  const roomDoc = await getDoc(doc(db, "Rooms", roomId, "history", "00000000"));
+  const previousTurn = roomDoc.data() as RoomDoc;
   const uid = auth.currentUser?.uid;
-  if (!uid) return;
+  if (uid && !roomDoc.exists()) return;
 
-  const nextTurn = gameData.turn + 1;
+  const nextTurn = roomDoc.turn + 1;
   const nextTurnId = nextTurn.toString().padStart(8, "0");
-  const nextPlayer = getPlayerByTurn(nextTurn, gameData.turnOrder, gameData.deadPlayers);
+  const turnEnd = new Date();
+  // const nextPlayer = getPlayerByTurn(nextTurn, gameData.turnOrder, gameData.deadPlayers);
 
-  await setDoc(doc(db, "Rooms", roomId, "history", nextTurnId), {
-    ...gameData,
+  const nextTurnRef = doc(db, "Rooms", roomId, "history", nextTurnId);
+  await setDoc(nextTurnRef, {
+    ...previousTurn,
     playerCards: updatedPlayerCards,
     deck: updatedDeck,
     discard: [],
@@ -586,7 +587,7 @@ const endTurn = async (
     nextPlayer,
     turn: nextTurn,
     turnStart: new Date(),
-    turnEnd: null,
+    turnEnd: turnEnd,
     remainingActions: 0,
   });
 };

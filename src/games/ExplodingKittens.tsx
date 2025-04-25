@@ -30,15 +30,24 @@ const ExplodingKittens = () => {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     const myHandEntries = Object.entries(now?.playerCards[myUid] || []);
+    let eventsResponseDisabled = false;
 
     // 채팅 자동 스크롤
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // 이벤트 응답
+    useEffect(() => {
+        console.log("events : ", events);
+    }, [events])
+
     const handleCardClick = (key: string) =>
-        setSelectedKeys((prev) =>
-            prev.includes(key) ? [] : [key]
+        setSelectedKeys(prev =>
+            // 이미 들어있으면 제거, 없으면 뒤에 추가
+            prev.includes(key)
+                ? prev.filter(k => k !== key)
+                : [...prev, key]
         );
 
     const handleCardSubmit = async () => {
